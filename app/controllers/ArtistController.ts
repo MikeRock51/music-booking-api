@@ -67,9 +67,6 @@ class ArtistControllerClass {
       const userId = req.user._id;
       const updateData = req.body;
 
-      // First get the artist profile to ensure it exists
-      const artist = await ArtistService.getArtistByUserId(userId);
-
       const updatedArtist = await ArtistService.updateArtistProfile(
         userId,
         updateData

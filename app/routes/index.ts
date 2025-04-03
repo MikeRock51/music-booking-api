@@ -16,6 +16,7 @@ router.use('/v1', v1Routes);
 
 // Handle 404 - Route not found
 router.use((req, res, next) => {
+  // console.log('Route not found:', req.originalUrl);
   const error = new AppError('Route not Found', 404);
   next(error);
 });
