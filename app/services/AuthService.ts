@@ -102,16 +102,17 @@ class AuthService {
    * @param userId - ID of the user to upgrade
    * @returns - Updated user data
    */
-  async upgradeToAdmin(upgradeInput: UpgradeUserInput): Promise<IUser> {
-    const user = await User.findById(upgradeInput.userId);
+  async upgradeTo(upgradeInput: UpgradeUserInput): Promise<IUser> {
+    const user = await User.findOneAndUpdate(
+      { _id: upgradeInput.userId },
+      { role: upgradeInput.role },
+      { new: true }
+    );
+
     if (!user) {
       throw new AppError("User not found", 404);
     }
-    if (user.role === UserRole.ADMIN) {
-      throw new AppError("User is already an admin", 400);
-    }
-    user.role = upgradeInput.role;
-    await user.save();
+
     return user;
   }
 

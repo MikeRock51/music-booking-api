@@ -64,15 +64,15 @@ class AuthControllerClass {
    * Upgrade a user's role to admin
    * Only accessible by admin users
    */
-  async upgrade(req: Request, res: Response, next: NextFunction) {
+  async upgradeTo(req: Request, res: Response, next: NextFunction) {
     try {
       const upgradeInput: UpgradeUserInput = req.body;
 
-      const updatedUser = await AuthService.upgradeToAdmin(upgradeInput);
+      const updatedUser = await AuthService.upgradeTo(upgradeInput);
 
       res.status(200).json({
         success: true,
-        message: 'User role upgraded to admin successfully',
+        message: 'User role upgraded successfully',
         data: {
           id: updatedUser._id,
           email: updatedUser.email,
