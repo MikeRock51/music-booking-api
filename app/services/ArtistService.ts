@@ -1,7 +1,6 @@
 import Artist, { IArtist } from '../models/Artist';
 import User, { UserRole } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
-import mongoose from 'mongoose';
 import { ArtistProfileInput } from '../interfaces/artist.interface';
 
 class ArtistService {
@@ -66,8 +65,8 @@ class ArtistService {
    * @param updateData - Artist profile update data
    */
   async updateArtistProfile(artistId: string, updateData: any): Promise<IArtist> {
-    const artist = await Artist.findByIdAndUpdate(
-      artistId,
+    const artist = await Artist.findOneAndUpdate(
+      { user: artistId },
       { ...updateData },
       { new: true, runValidators: true }
     );

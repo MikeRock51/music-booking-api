@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ArtistController } from '../../controllers/ArtistController';
-import { artistProfileValidator } from '../../validators/artistValidator';
+import { artistProfileValidator, updateArtistProfileValidator } from '../../validators/artistValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
 
@@ -24,7 +24,7 @@ router.put(
   '/profile',
   protect,
   restrictTo('artist'),
-  artistProfileValidator,
+  updateArtistProfileValidator,
   validationMiddleware,
   ArtistController.updateMyProfile
 );
