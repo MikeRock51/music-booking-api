@@ -1,4 +1,3 @@
-import { ProductController } from '../controllers/ProductController';
 import { Router } from 'express';
 import { AppError } from '../middleware/errorHandler';
 import { upload } from '../config/upload';
@@ -48,13 +47,13 @@ router.post(
   AuthController.upgradeToAdmin
 );
 
-router.post(
-  '/auth/upgrade-to-organizer',
-  protect,
-  upgradeToOrganizerValidator,
-  validationMiddleware,
-  AuthController.upgradeToOrganizer
-);
+// router.post(
+//   '/auth/upgrade-to-organizer',
+//   protect,
+//   upgradeToOrganizerValidator,
+//   validationMiddleware,
+//   AuthController.upgradeToOrganizer
+// );
 
 // Artist routes
 router.post(
@@ -240,38 +239,6 @@ router.patch(
   bookingIdValidator,
   validationMiddleware,
   BookingController.completeBooking
-);
-
-// Product routes
-router.post('/products',
-  protect,
-  upload.array('images', 10),
-  productValidationRules.create,
-  ProductController.createProduct
-);
-
-router.get('/products',
-  productValidationRules.getAll,
-  ProductController.getAllProducts
-);
-
-router.get('/products/:id',
-  productValidationRules.getById,
-  ProductController.getProductById
-);
-
-router.put('/products/:id',
-  protect,
-  upload.array('images', 10),
-  productValidationRules.update,
-  ProductController.updateProduct
-);
-
-router.delete('/products/:id',
-  protect,
-  restrictTo('admin'),
-  productValidationRules.delete,
-  ProductController.deleteProduct
 );
 
 // Handle 404 - Route not found

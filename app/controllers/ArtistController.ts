@@ -70,7 +70,7 @@ class ArtistControllerClass {
       const artist = await ArtistService.getArtistByUserId(userId);
 
       const updatedArtist = await ArtistService.updateArtistProfile(
-        artist._id,
+        userId,
         updateData
       );
 

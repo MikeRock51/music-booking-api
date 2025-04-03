@@ -101,7 +101,7 @@ class BookingControllerClass {
       if (endDate) filters.endDate = endDate;
 
       const result = await BookingService.getArtistBookings(
-        artist._id,
+        userId,
         filters,
         Number(page),
         Number(limit)
