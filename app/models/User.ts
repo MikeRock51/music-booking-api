@@ -58,7 +58,7 @@ const UserSchema = new Schema<IUser>(
     phoneNumber: {
       type: String,
       trim: true,
-      unique: true,
+      // unique: true,
     },
     bio: {
       type: String,
