@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ArtistController } from '../../controllers/ArtistController';
-import { artistProfileValidator } from '../../validators/authValidator';
+import { artistProfileValidator } from '../../validators/artistValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
 
