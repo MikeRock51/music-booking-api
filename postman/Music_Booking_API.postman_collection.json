@@ -1,0 +1,716 @@
+{
+  "info": {
+    "name": "Music Booking API",
+    "description": "API collection for testing the Music Booking API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Authentication-related endpoints",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with user credentials"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Upgrade to Organizer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/upgrade-to-organizer",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "upgrade-to-organizer"]
+            },
+            "description": "Upgrade user to organizer role"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Artists",
+      "description": "Artist profile endpoints",
+      "item": [
+        {
+          "name": "Create Artist Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artistName\": \"DJ Awesome\",\n  \"genres\": [\"electronic\", \"pop\"],\n  \"bio\": \"Professional DJ with over 10 years of experience\",\n  \"location\": \"New York, NY\",\n  \"rate\": {\n    \"amount\": 200,\n    \"currency\": \"USD\",\n    \"per\": \"hour\"\n  },\n  \"portfolio\": {\n    \"images\": [],\n    \"videos\": [],\n    \"socialMedia\": [\n      {\n        \"platform\": \"Instagram\",\n        \"url\": \"https://instagram.com/djawesome\"\n      },\n      {\n        \"platform\": \"SoundCloud\",\n        \"url\": \"https://soundcloud.com/djawesome\"\n      }\n    ],\n    \"website\": \"https://djawesome.com\"\n  },\n  \"availability\": {\n    \"availableDays\": [\"Friday\", \"Saturday\", \"Sunday\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/artists/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["artists", "profile"]
+            },
+            "description": "Create a new artist profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Artist Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/artists/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["artists", "profile"]
+            },
+            "description": "Get the logged-in user's artist profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Artist Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Professional DJ with over 10 years of experience in clubs and festivals\",\n  \"rate\": {\n    \"amount\": 250,\n    \"currency\": \"USD\",\n    \"per\": \"hour\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/artists/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["artists", "profile"]
+            },
+            "description": "Update the logged-in user's artist profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Artists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/artists?genres=electronic,pop&location=New York&minRate=100&maxRate=300&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["artists"],
+              "query": [
+                {
+                  "key": "genres",
+                  "value": "electronic,pop"
+                },
+                {
+                  "key": "location",
+                  "value": "New York"
+                },
+                {
+                  "key": "minRate",
+                  "value": "100"
+                },
+                {
+                  "key": "maxRate",
+                  "value": "300"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Search for artists based on various filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Artist by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/artists/{{artistId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["artists", "{{artistId}}"]
+            },
+            "description": "Get an artist by ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "description": "Event management endpoints",
+      "item": [
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Music Festival\",\n  \"description\": \"Annual summer music festival featuring top artists\",\n  \"eventType\": \"festival\",\n  \"date\": {\n    \"start\": \"2023-07-15T14:00:00Z\",\n    \"end\": \"2023-07-15T23:00:00Z\"\n  },\n  \"venue\": \"{{venueId}}\",\n  \"ticketInfo\": {\n    \"price\": 50,\n    \"totalTickets\": 1000\n  },\n  \"featuredArtists\": [\"{{artistId}}\"],\n  \"images\": [],\n  \"isPrivate\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            },
+            "description": "Create a new event"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events?startDate=2023-07-01&endDate=2023-07-31&eventType=festival&location=New York&minPrice=10&maxPrice=100&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2023-07-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-07-31"
+                },
+                {
+                  "key": "eventType",
+                  "value": "festival"
+                },
+                {
+                  "key": "location",
+                  "value": "New York"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "10"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "100"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Search for events based on various filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/my-events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "my-events"]
+            },
+            "description": "Get events created by the logged-in organizer"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            },
+            "description": "Get an event by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Music Festival 2023\",\n  \"description\": \"Annual summer music festival featuring top artists and performers\",\n  \"ticketInfo\": {\n    \"price\": 60,\n    \"totalTickets\": 1200\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}"]
+            },
+            "description": "Update an event"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "publish"]
+            },
+            "description": "Publish an event (change status from draft to published)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "cancel"]
+            },
+            "description": "Cancel an event"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "description": "Booking management endpoints",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artist\": \"{{artistId}}\",\n  \"event\": \"{{eventId}}\",\n  \"bookingDetails\": {\n    \"startTime\": \"2023-07-15T18:00:00Z\",\n    \"endTime\": \"2023-07-15T20:00:00Z\",\n    \"setDuration\": 120,\n    \"specialRequirements\": \"Need DJ equipment and lighting setup\"\n  },\n  \"payment\": {\n    \"amount\": 500,\n    \"currency\": \"USD\",\n    \"depositAmount\": 100\n  },\n  \"notes\": \"Main stage performance\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            },
+            "description": "Create a new booking"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}"]
+            },
+            "description": "Get a booking by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Artist Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/artist?status=pending&startDate=2023-07-01&endDate=2023-07-31&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "artist"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2023-07-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-07-31"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get bookings for the logged-in artist"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organizer Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/organizer?status=confirmed&eventId={{eventId}}&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "organizer"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                },
+                {
+                  "key": "eventId",
+                  "value": "{{eventId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get bookings created by the logged-in organizer"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Booking Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "status"]
+            },
+            "description": "Update booking status"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"paid\",\n  \"depositPaid\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "payment"]
+            },
+            "description": "Update booking payment status"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "confirm"]
+            },
+            "description": "Confirm a booking (by artist)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "reject"]
+            },
+            "description": "Reject a booking (by artist)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "cancel"]
+            },
+            "description": "Cancel a booking"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "{{bookingId}}", "complete"]
+            },
+            "description": "Mark a booking as completed (by organizer)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "artistId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "venueId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

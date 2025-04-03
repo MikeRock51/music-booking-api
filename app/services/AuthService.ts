@@ -4,36 +4,38 @@ import { AppError } from "../middleware/errorHandler";
 import { jwtPayload } from "../interfaces/jwtPayload";
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { AuthResponse, RegisterUserInput } from "../interfaces/auth.interface";
-
+import { AuthResponse, LoginCredentials, RegisterUserInput } from "../interfaces/auth.interface";
+import Artist from "../models/Artist";
+import { ObjectId } from "mongoose";
 
 class AuthService {
   /**
    * Register a new user
    */
-  async register(userData: RegisterUserInput): Promise<AuthResponsee> {
-    // Check if email already exists
+  async register(userData: RegisterUserInput): Promise<AuthResponse> {
+    // Check if user exists
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
-      throw new AppError("Email already in use", 409);
+      throw new AppError('Email already in use', 400);
     }
 
     // Create new user
-    const user = await User.create(userData);
-    const payload = this.generateJwtPayloadPayload(user);
+    const user = await User.create({
+      email: userData.email,
+      password: userData.password,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      role: userData.role || UserRole.USER,
+      phoneNumber: userData.phoneNumber
+    });
 
     // Generate JWT token
-    const token = this.generateToken(payload);
+    const jwtPayload = this.generateJwtPayloadPayload(user);
+    const token = this.generateToken(jwtPayload);
 
     return {
-      user: {
-        id: user._id!.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
-      token,
+      user: this.formatUserResponse(user),
+      token
     };
   }
 
@@ -41,39 +43,58 @@ class AuthService {
    * Login a user
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    // Find user by email and include password field explicitly
-    const user = await User.findOne({ email: credentials.email }).select(
-      "+password"
-    );
+    // Find user by email
+    const user = await User.findOne({ email: credentials.email }).select('+password');
 
-    // Check if user exists
     if (!user) {
-      throw new AppError("Invalid email or password", 401);
+      throw new AppError('Invalid email or password', 401);
     }
 
     // Check if password is correct
-    const isPasswordMatch = await this.comparePassword(
-      credentials.password,
-      user.password
-    );
-
-    if (!isPasswordMatch) {
-      throw new AppError("Invalid email or password", 401);
+    const isPasswordValid = await this.comparePassword(credentials.password, user.password);
+    if (!isPasswordValid) {
+      throw new AppError('Invalid email or password', 401);
     }
 
-    const payload = this.generateJwtPayloadPayload(user);
-    const token = this.generateToken(payload);
+    // Generate JWT token
+    const jwtPayload = this.generateJwtPayloadPayload(user);
+    const token = this.generateToken(jwtPayload);
 
     return {
-      user: {
-        id: user._id!.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
-      token,
+      user: this.formatUserResponse(user),
+      token
     };
+  }
+
+  /**
+   * Register as artist
+   * @param userId - User ID to register as artist
+   * @param artistData - Artist profile data
+   */
+  async registerAsArtist(userId: string, artistData: any): Promise<any> {
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    // Check if user is already an artist
+    const existingArtist = await Artist.findOne({ user: userId });
+    if (existingArtist) {
+      throw new AppError('User is already registered as an artist', 400);
+    }
+
+    // Update user role to artist
+    user.role = UserRole.ARTIST;
+    await user.save();
+
+    // Create artist profile
+    const artist = await Artist.create({
+      user: userId,
+      ...artistData
+    });
+
+    return artist;
   }
 
   /**
@@ -83,18 +104,30 @@ class AuthService {
    */
   async upgradeToAdmin(userId: string): Promise<IUser> {
     const user = await User.findById(userId);
-
     if (!user) {
       throw new AppError("User not found", 404);
     }
-
     if (user.role === UserRole.ADMIN) {
       throw new AppError("User is already an admin", 400);
     }
-
     user.role = UserRole.ADMIN;
     await user.save();
+    return user;
+  }
 
+  /**
+   * Upgrade a user to organizer role
+   */
+  async upgradeToOrganizer(userId: string): Promise<IUser> {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    if (user.role === UserRole.ORGANIZER) {
+      throw new AppError("User is already an organizer", 400);
+    }
+    user.role = UserRole.ORGANIZER;
+    await user.save();
     return user;
   }
 
@@ -121,24 +154,21 @@ class AuthService {
     return bcrypt.compare(candidatePassword, userPassword);
   }
 
-  // /**
-  //  * Verify token and return user data
-  //  */
-  // async verifyToken(token: string): Promise<IUser | null> {
-  //   try {
-  //     const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
-  //     const user = await User.findById(decoded.id);
-  //     return user;
-  //   } catch (error) {
-  //     return null;
-  //   }
-  // }
-
   private generateJwtPayloadPayload(user: IUser): jwtPayload {
     return {
       id: user._id!.toString(),
       email: user.email,
       role: user.role,
+    };
+  }
+
+  private formatUserResponse(user: IUser): AuthResponse["user"] {
+    return {
+      id: (user._id as ObjectId).toString(),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role
     };
   }
 }
