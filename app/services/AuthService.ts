@@ -116,22 +116,6 @@ class AuthService {
   }
 
   /**
-   * Upgrade a user to organizer role
-   */
-  async upgradeToOrganizer(userId: string): Promise<IUser> {
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new AppError("User not found", 404);
-    }
-    if (user.role === UserRole.ORGANIZER) {
-      throw new AppError("User is already an organizer", 400);
-    }
-    user.role = UserRole.ORGANIZER;
-    await user.save();
-    return user;
-  }
-
-  /**
    * Generate JWT token for authenticated user
    */
   private generateToken(user: jwtPayload): string {

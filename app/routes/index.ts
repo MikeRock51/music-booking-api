@@ -47,14 +47,6 @@ router.post(
   AuthController.upgrade
 );
 
-// router.post(
-//   '/auth/upgrade-to-organizer',
-//   protect,
-//   upgradeToOrganizerValidator,
-//   validationMiddleware,
-//   AuthController.upgradeToOrganizer
-// );
-
 // Artist routes
 router.post(
   '/artists/profile',
