@@ -15,8 +15,9 @@ class AuthService {
   async register(userData: RegisterUserInput): Promise<AuthResponse> {
     // Check if user exists
     const existingUser = await User.findOne({ email: userData.email });
+
     if (existingUser) {
-      throw new AppError('Email already in use', 400);
+      throw new AppError('Email already in use', 409);
     }
 
     // Create new user
@@ -64,37 +65,6 @@ class AuthService {
       user: this.formatUserResponse(user),
       token
     };
-  }
-
-  /**
-   * Register as artist
-   * @param userId - User ID to register as artist
-   * @param artistData - Artist profile data
-   */
-  async registerAsArtist(userId: string, artistData: any): Promise<any> {
-    // Check if user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    // Check if user is already an artist
-    const existingArtist = await Artist.findOne({ user: userId });
-    if (existingArtist) {
-      throw new AppError('User is already registered as an artist', 400);
-    }
-
-    // Update user role to artist
-    user.role = UserRole.ARTIST;
-    await user.save();
-
-    // Create artist profile
-    const artist = await Artist.create({
-      user: userId,
-      ...artistData
-    });
-
-    return artist;
   }
 
   /**

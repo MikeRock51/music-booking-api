@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import AuthService from '../services/AuthService';
-import { LoginCredentials, UpgradeUserInput } from '../interfaces/auth.interface';
+import { LoginCredentials, RegisterUserInput, UpgradeUserInput } from '../interfaces/auth.interface';
 
 class AuthControllerClass {
   /**
@@ -8,14 +8,9 @@ class AuthControllerClass {
    */
   async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password, firstName, lastName } = req.body;
+      const registrationData: RegisterUserInput = req.body;
 
-      const result = await AuthService.register({
-        email,
-        password,
-        firstName,
-        lastName,
-      });
+      const result = await AuthService.register(registrationData);
 
       res.status(201).json({
         success: true,
