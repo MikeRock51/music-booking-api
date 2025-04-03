@@ -12,6 +12,9 @@ describe("AuthController", () => {
 
   beforeAll(async () => {
     await initializeDatabase();
+  });
+
+  beforeEach(async () => {
     await User.deleteMany({ email: /@controllerexample.com/ });
 
     // Create test user
@@ -47,8 +50,11 @@ describe("AuthController", () => {
     adminToken = loginResponse.body.data.token;
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await User.deleteMany({ email: /@controllerexample.com/ });
+  });
+
+  afterAll(async () => {
     await closeDatabase();
   });
 
@@ -80,6 +86,12 @@ describe("AuthController", () => {
         firstName: "Test",
         lastName: "User",
       };
+
+      try {
+        await User.create(userData);
+      }
+      catch (error) {
+      }
 
       const response = await request(app)
         .post("/v1/auth/register")
