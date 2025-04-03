@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import ArtistService from '../services/ArtistService';
+import { ArtistProfileInput } from '../interfaces/artist.interface';
 
 class ArtistControllerClass {
   /**
@@ -8,7 +9,7 @@ class ArtistControllerClass {
   async createProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user._id;
-      const artistData = req.body;
+      const artistData: ArtistProfileInput = req.body;
 
       const artist = await ArtistService.createArtistProfile(userId, artistData);
 

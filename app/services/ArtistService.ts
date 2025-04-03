@@ -2,6 +2,7 @@ import Artist, { IArtist } from '../models/Artist';
 import User, { UserRole } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
 import mongoose from 'mongoose';
+import { ArtistProfileInput } from '../interfaces/artist.interface';
 
 class ArtistService {
   /**
@@ -9,7 +10,7 @@ class ArtistService {
    * @param userId - User ID to associate with artist profile
    * @param artistData - Artist profile data
    */
-  async createArtistProfile(userId: string, artistData: any): Promise<IArtist> {
+  async createArtistProfile(userId: string, artistData: ArtistProfileInput): Promise<IArtist> {
     // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
