@@ -31,7 +31,7 @@ router.put(
 
 router.get(
   '/',
-  ArtistController.searchArtists
+  ArtistController.findArtists
 );
 
 router.get(

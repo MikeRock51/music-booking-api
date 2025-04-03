@@ -85,7 +85,7 @@ class ArtistControllerClass {
   /**
    * Search artists with filters
    */
-  async searchArtists(req: Request, res: Response, next: NextFunction) {
+  async findArtists(req: Request, res: Response, next: NextFunction) {
     try {
       const { genres, location, minRate, maxRate, minRating, page = 1, limit = 10 } = req.query;
 
@@ -100,7 +100,7 @@ class ArtistControllerClass {
       if (maxRate) filters.maxRate = Number(maxRate);
       if (minRating) filters.minRating = Number(minRating);
 
-      const result = await ArtistService.searchArtists(
+      const result = await ArtistService.findArtists(
         filters,
         Number(page),
         Number(limit)

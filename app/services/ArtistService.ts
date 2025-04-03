@@ -84,7 +84,7 @@ class ArtistService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async searchArtists(filters: any, page = 1, limit = 10): Promise<{ artists: IArtist[], total: number, page: number, pages: number }> {
+  async findArtists(filters: any, page = 1, limit = 10): Promise<{ artists: IArtist[], total: number, page: number, pages: number }> {
     const query: any = {};
 
     // Apply genre filter
@@ -99,12 +99,11 @@ class ArtistService {
 
     // Apply rate range filter
     if (filters.minRate || filters.maxRate) {
-      query.rate = {};
       if (filters.minRate) {
-        query.rate.amount = { $gte: filters.minRate };
+        query['rate.amount'] = { $gte: filters.minRate };
       }
       if (filters.maxRate) {
-        query.rate.amount = { ...query.rate.amount, $lte: filters.maxRate };
+        query['rate.amount'] = { ...query['rate.amount'], $lte: filters.maxRate };
       }
     }
 
