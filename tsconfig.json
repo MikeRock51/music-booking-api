@@ -1,0 +1,10 @@
+{
+    "extends": "@tsconfig/node20/tsconfig.json",
+    "compilerOptions": {
+      "target": "ES6",
+      "outDir": "./dist",
+      "rootDir": "./app",
+    },
+    "include": ["app/**/*"],
+    "exclude": ["node_modules", "dist"]
+  }

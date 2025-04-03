@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    container_name: music-booking-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - DB_URI=${DB_URI:-mongodb://mongodb:27017/music-booking}
+      - TEST_DB_URI=${TEST_DB_URI:-mongodb://mongodb:27017/music-booking-test}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-1d}
+      - AWS_BUCKET_REGION=your-bucket-region
+      - AWS_ACCESS_KEY_ID=your-access-key-id
+      - AWS_SECRET=your-secret-key
+      - AWS_REGION=your-region
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - music-booking-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: music-booking-mongodb
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - music-booking-network
+
+networks:
+  music-booking-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
