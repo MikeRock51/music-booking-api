@@ -43,7 +43,7 @@ export const protect = async (
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
       return next(
-        new AppError('The user belonging to this token no longer exists.', 401)
+        new AppError('User does not exist.', 401)
       );
     }
 

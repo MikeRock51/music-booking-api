@@ -4,7 +4,7 @@ import { upload } from '../config/upload';
 import { AuthController } from '../controllers/AuthController';
 import { registerValidator, loginValidator, upgradeToAdminValidator, upgradeToOrganizerValidator, artistProfileValidator } from '../validators/authValidator';
 import { protect, restrictTo } from '../middleware/auth';
-import { validationMiddleware } from '../validators';
+import { validationMiddleware } from '../middleware/validator';
 import { ArtistController } from '../controllers/ArtistController';
 import { EventController } from '../controllers/EventController';
 import { createEventValidator, updateEventValidator, eventIdValidator, searchEventsValidator } from '../validators/eventValidator';
