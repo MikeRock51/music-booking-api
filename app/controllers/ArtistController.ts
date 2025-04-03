@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import ArtistService from '../services/ArtistService';
-import { ArtistProfileInput } from '../interfaces/artist.interface';
+import { Request, Response, NextFunction } from "express";
+import ArtistService from "../services/ArtistService";
+import { ArtistProfileInput } from "../interfaces/artist.interface";
 
 class ArtistControllerClass {
   /**
@@ -11,12 +11,15 @@ class ArtistControllerClass {
       const userId = req.user._id;
       const artistData: ArtistProfileInput = req.body;
 
-      const artist = await ArtistService.createArtistProfile(userId, artistData);
+      const artist = await ArtistService.createArtistProfile(
+        userId,
+        artistData
+      );
 
       res.status(201).json({
         success: true,
-        message: 'Artist profile created successfully',
-        data: artist
+        message: "Artist profile created successfully",
+        data: artist,
       });
     } catch (error) {
       next(error);
@@ -34,7 +37,7 @@ class ArtistControllerClass {
 
       res.status(200).json({
         success: true,
-        data: artist
+        data: artist,
       });
     } catch (error) {
       next(error);
@@ -52,7 +55,7 @@ class ArtistControllerClass {
 
       res.status(200).json({
         success: true,
-        data: artist
+        data: artist,
       });
     } catch (error) {
       next(error);
@@ -74,8 +77,8 @@ class ArtistControllerClass {
 
       res.status(200).json({
         success: true,
-        message: 'Artist profile updated successfully',
-        data: updatedArtist
+        message: "Artist profile updated successfully",
+        data: updatedArtist,
       });
     } catch (error) {
       next(error);
@@ -87,7 +90,15 @@ class ArtistControllerClass {
    */
   async findArtists(req: Request, res: Response, next: NextFunction) {
     try {
-      const { genres, location, minRate, maxRate, minRating, page = 1, limit = 10 } = req.query;
+      const {
+        genres,
+        location,
+        minRate,
+        maxRate,
+        minRating,
+        page = 1,
+        limit = 10,
+      } = req.query;
 
       const filters: any = {};
 
@@ -108,12 +119,7 @@ class ArtistControllerClass {
 
       res.status(200).json({
         success: true,
-        data: result.artists,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: result,
       });
     } catch (error) {
       next(error);

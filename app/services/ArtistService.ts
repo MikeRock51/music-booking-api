@@ -84,7 +84,7 @@ class ArtistService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async findArtists(filters: any, page = 1, limit = 10): Promise<{ artists: IArtist[], total: number, page: number, pages: number }> {
+  async findArtists(filters: any, page = 1, limit = 10): Promise<IArtist[]> {
     const query: any = {};
 
     // Apply genre filter
@@ -125,15 +125,7 @@ class ArtistService {
         select: 'firstName lastName email profileImage'
       });
 
-    // Get total count
-    const total = await Artist.countDocuments(query);
-
-    return {
-      artists,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
-    };
+    return artists;
   }
 }
 
