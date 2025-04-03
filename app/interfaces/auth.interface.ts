@@ -24,3 +24,9 @@ export interface AuthResponse {
   };
   token: string;
 }
+
+export interface UpgradeUserInput {
+  userId: string;
+  role: UserRole;
+}
+

@@ -39,12 +39,12 @@ router.get(
 );
 
 router.post(
-  '/auth/upgrade-to-admin',
+  '/auth/user/upgrade',
   protect,
   restrictTo('admin'),
   upgradeToAdminValidator,
   validationMiddleware,
-  AuthController.upgradeToAdmin
+  AuthController.upgrade
 );
 
 // router.post(

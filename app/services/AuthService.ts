@@ -4,7 +4,7 @@ import { AppError } from "../middleware/errorHandler";
 import { jwtPayload } from "../interfaces/jwtPayload";
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { AuthResponse, LoginCredentials, RegisterUserInput } from "../interfaces/auth.interface";
+import { AuthResponse, LoginCredentials, RegisterUserInput, UpgradeUserInput } from "../interfaces/auth.interface";
 import Artist from "../models/Artist";
 import { ObjectId } from "mongoose";
 
@@ -102,15 +102,15 @@ class AuthService {
    * @param userId - ID of the user to upgrade
    * @returns - Updated user data
    */
-  async upgradeToAdmin(userId: string): Promise<IUser> {
-    const user = await User.findById(userId);
+  async upgradeToAdmin(upgradeInput: UpgradeUserInput): Promise<IUser> {
+    const user = await User.findById(upgradeInput.userId);
     if (!user) {
       throw new AppError("User not found", 404);
     }
     if (user.role === UserRole.ADMIN) {
       throw new AppError("User is already an admin", 400);
     }
-    user.role = UserRole.ADMIN;
+    user.role = upgradeInput.role;
     await user.save();
     return user;
   }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import AuthService from '../services/AuthService';
+import { LoginCredentials, UpgradeUserInput } from '../interfaces/auth.interface';
 
 class AuthControllerClass {
   /**
@@ -30,12 +31,9 @@ class AuthControllerClass {
    */
   async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body;
+      const loginCredentials: LoginCredentials = req.body;
 
-      const result = await AuthService.login({
-        email,
-        password
-      });
+      const result = await AuthService.login(loginCredentials);
 
       res.status(200).json({
         success: true,
@@ -66,11 +64,11 @@ class AuthControllerClass {
    * Upgrade a user's role to admin
    * Only accessible by admin users
    */
-  async upgradeToAdmin(req: Request, res: Response, next: NextFunction) {
+  async upgrade(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId } = req.body;
+      const upgradeInput: UpgradeUserInput = req.body;
 
-      const updatedUser = await AuthService.upgradeToAdmin(userId);
+      const updatedUser = await AuthService.upgradeToAdmin(upgradeInput);
 
       res.status(200).json({
         success: true,
