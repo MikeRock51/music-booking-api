@@ -1,4 +1,4 @@
-import Artist from "../app/models/Artist";
+import Artist, { MusicGenre } from "../app/models/Artist";
 import User, { UserRole } from "../app/models/User";
 import jwt from "jsonwebtoken";
 import 'dotenv/config';
@@ -34,3 +34,16 @@ export const testArtistUserData = {
   lastName: "Artist",
   role: UserRole.ARTIST,
 };
+
+export const testArtistData: any = {
+  artistName: "Test Artist",
+  genres: [MusicGenre.POP, MusicGenre.ROCK],
+  bio: "This is a test artist bio",
+  location: "Test City",
+  rate: {
+    amount: 150,
+    currency: "USD",
+    per: "hour",
+  },
+  rating: 4.5,
+}

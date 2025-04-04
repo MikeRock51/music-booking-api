@@ -166,6 +166,7 @@ describe("AuthController", () => {
       try {
         testUser = await createTestUser(testUserData);
         userToken = createToken(testUser);
+        userId = testUser._id.toString();
       } catch (error) {}
 
       const response = await request(app)

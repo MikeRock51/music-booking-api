@@ -7,8 +7,10 @@ import { initializeDatabase, closeDatabase } from "../../app/config/database";
 import User, { UserRole } from "../../app/models/User";
 import Artist, { MusicGenre } from "../../app/models/Artist";
 import {
+  createTestArtist,
   createTestUser,
   createToken,
+  testArtistData,
   testArtistUserData,
   testUserData,
 } from "../helpers";
@@ -40,19 +42,8 @@ describe("Artist Controller", () => {
     const artistUser = await createTestUser(testArtistUserData);
 
     // Create an artist profile for the artist user
-    testArtist = await Artist.create({
-      user: artistUser._id,
-      artistName: "Test Artist",
-      genres: [MusicGenre.POP, MusicGenre.ROCK],
-      bio: "This is a test artist bio",
-      location: "Test City",
-      rate: {
-        amount: 150,
-        currency: "USD",
-        per: "hour",
-      },
-      rating: 4.5,
-    });
+    testArtistData.user = artistUser._id;
+    testArtist = await Artist.create(testArtistData);
 
     // Generate tokens for both users
     userToken = createToken(testUser);
@@ -181,6 +172,8 @@ describe("Artist Controller", () => {
       try {
         testArtist = await createTestUser(testArtistUserData);
         artistToken = createToken(testArtist);
+        testArtistData.user = testArtist._id;
+        testArtist = await createTestArtist(testArtistData);
       }
       catch (error) {} // If an error is thrown, then the user already exist
 
