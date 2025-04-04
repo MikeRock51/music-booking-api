@@ -3,55 +3,49 @@ import { createApp } from "../../app/createApp";
 import { initializeDatabase, closeDatabase } from "../../app/config/database";
 import User, { UserRole } from "../../app/models/User";
 import mongoose from "mongoose";
+import { createTestUser, createToken } from "../helpers";
 
 describe("AuthController", () => {
   const app = createApp();
   let userToken: string;
   let userId: string;
   let adminToken: string;
+  let testUser: any;
+
+  const testUserData = {
+    email: "test1@authcontrollerexample.com",
+    password: "Password123!",
+    firstName: "Test",
+    lastName: "User",
+  };
+
+  const testAdminUserData = {
+    email: "testadmin@authcontrollerexample.com",
+    password: "Password123!",
+    firstName: "Admin",
+    lastName: "User",
+    role: UserRole.ADMIN,
+  };
 
   beforeAll(async () => {
     await initializeDatabase();
   });
 
   beforeEach(async () => {
-    await User.deleteMany({ email: /@controllerexample.com/ });
+    await User.deleteMany({ email: /@authcontrollerexample.com/ });
 
     // Create test user
-    const userData = {
-      email: "test1@controllerexample.com",
-      password: "Password123!",
-      firstName: "Test",
-      lastName: "User",
-    };
-
-    const userResponse = await request(app)
-      .post("/v1/auth/register")
-      .send(userData);
-
-    userId = userResponse.body.data.user.id;
-    userToken = userResponse.body.data.token;
+    testUser = await createTestUser(testUserData);
+    userId = testUser._id.toString();
+    userToken = createToken(testUser);
 
     // Create admin user for testing
-    const adminUser = await User.create({
-      email: "testadmin@controllerexample.com",
-      password: "Password123!",
-      firstName: "Admin",
-      lastName: "User",
-      role: UserRole.ADMIN,
-    });
-
-    // Login as admin to get token
-    const loginResponse = await request(app).post("/v1/auth/login").send({
-      email: "testadmin@controllerexample.com",
-      password: "Password123!",
-    });
-
-    adminToken = loginResponse.body.data.token;
+    const adminUser = await createTestUser(testAdminUserData);
+    adminToken = createToken(adminUser);
   });
 
   afterEach(async () => {
-    await User.deleteMany({ email: /@controllerexample.com/ });
+    await User.deleteMany({ email: /@authcontrollerexample.com/ });
   });
 
   afterAll(async () => {
@@ -61,7 +55,7 @@ describe("AuthController", () => {
   describe("POST /v1/auth/register", () => {
     it("should register a new user successfully", async () => {
       const userData = {
-        email: "test15@controllerexample.com",
+        email: "test15@authcontrollerexample.com",
         password: "Password123!",
         firstName: "Test",
         lastName: "User",
@@ -81,7 +75,7 @@ describe("AuthController", () => {
 
     it("should return 409 when registering with existing email", async () => {
       const userData = {
-        email: "test1@controllerexample.com",
+        email: "test1@authcontrollerexample.com",
         password: "Password123!",
         firstName: "Test",
         lastName: "User",
@@ -89,9 +83,7 @@ describe("AuthController", () => {
 
       try {
         await User.create(userData);
-      }
-      catch (error) {
-      }
+      } catch (error) {}
 
       const response = await request(app)
         .post("/v1/auth/register")
@@ -104,7 +96,7 @@ describe("AuthController", () => {
 
     it("should validate required registration fields", async () => {
       const userData = {
-        email: "test2@controllerexample.com",
+        email: "test2@authcontrollerexample.com",
         // missing required fields
       };
 
@@ -120,7 +112,7 @@ describe("AuthController", () => {
   describe("POST /v1/auth/login", () => {
     it("should login successfully with valid credentials", async () => {
       const loginData = {
-        email: "test1@controllerexample.com",
+        email: "test1@authcontrollerexample.com",
         password: "Password123!",
       };
 
@@ -137,7 +129,7 @@ describe("AuthController", () => {
 
     it("should return 401 with invalid credentials", async () => {
       const loginData = {
-        email: "test1@controllerexample.com",
+        email: "test1@authcontrollerexample.com",
         password: "WrongPassword123!",
       };
 
@@ -151,7 +143,7 @@ describe("AuthController", () => {
 
     it("should return 401 with non-existent user", async () => {
       const loginData = {
-        email: "nonexistent@controllerexample.com",
+        email: "nonexistent@authcontrollerexample.com",
         password: "Password123!",
       };
 
@@ -175,7 +167,7 @@ describe("AuthController", () => {
       expect(response.body.data).toHaveProperty("_id", userId);
       expect(response.body.data).toHaveProperty(
         "email",
-        "test1@controllerexample.com"
+        "test1@authcontrollerexample.com"
       );
     });
 
