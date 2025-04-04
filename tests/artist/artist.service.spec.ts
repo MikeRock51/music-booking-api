@@ -360,4 +360,122 @@ describe("ArtistService", () => {
       );
     });
   });
+
+  describe("uploadPortfolioImages method", () => {
+    let artistId: string;
+
+    beforeEach(async () => {
+      // First create an artist profile
+      const artistData: ArtistProfileInput = {
+        artistName: "Portfolio Artist",
+        genres: [MusicGenre.POP],
+        bio: "Artist with portfolio",
+        location: "Studio",
+        rate: {
+          amount: 100,
+          currency: "USD",
+          per: "hour",
+        },
+      };
+
+      const artist = await ArtistService.createArtistProfile(userId, artistData);
+      artistId = artist._id.toString();
+
+      // Mock the uploadFileToS3 function
+      jest.spyOn(require("../../app/config/upload"), "uploadFileToS3").mockImplementation(
+        (file: Express.Multer.File) => {
+          return Promise.resolve(`https://example.com/images/${file.filename}`);
+        }
+      );
+    });
+
+    it("should upload portfolio images successfully", async () => {
+      // Mock multer files
+      const mockFiles = [
+        {
+          filename: 'test-image-1.jpg',
+          path: '/tmp/test-image-1.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+        } as Express.Multer.File,
+        {
+          filename: 'test-image-2.jpg',
+          path: '/tmp/test-image-2.jpg',
+          mimetype: 'image/jpeg',
+          size: 2048,
+        } as Express.Multer.File
+      ];
+
+      const results = await ArtistService.uploadPortfolioImages(userId, mockFiles);
+
+      // Verify we got back the correct image URLs
+      expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBe(2);
+      expect(results).toEqual([
+        'https://example.com/images/test-image-1.jpg',
+        'https://example.com/images/test-image-2.jpg'
+      ]);
+
+      // Check if the artist document was updated with the image URLs
+      const updatedArtist = await Artist.findById(artistId);
+      expect(updatedArtist?.portfolio.images).toContain('https://example.com/images/test-image-1.jpg');
+      expect(updatedArtist?.portfolio.images).toContain('https://example.com/images/test-image-2.jpg');
+    });
+
+    it("should throw error when artist profile not found", async () => {
+      const nonExistentId = new mongoose.Types.ObjectId().toString();
+      const mockFiles = [
+        {
+          filename: 'test-image.jpg',
+          path: '/tmp/test-image.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+        } as Express.Multer.File
+      ];
+
+      await expect(
+        ArtistService.uploadPortfolioImages(nonExistentId, mockFiles)
+      ).rejects.toThrow("Artist profile not found for this user");
+    });
+
+    it("should handle empty files array", async () => {
+      const mockFiles: Express.Multer.File[] = [];
+
+      const results = await ArtistService.uploadPortfolioImages(userId, mockFiles);
+
+      expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBe(0);
+    });
+
+    it("should append new images to existing portfolio images", async () => {
+      // Add initial images to the artist's portfolio
+      const artist = await Artist.findById(artistId);
+      artist!.portfolio = {
+        images: ['https://example.com/images/existing-image.jpg'],
+        videos: []
+      };
+      await artist!.save();
+
+      // Upload new images
+      const mockFiles = [
+        {
+          filename: 'new-image.jpg',
+          path: '/tmp/new-image.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+        } as Express.Multer.File
+      ];
+
+      const results = await ArtistService.uploadPortfolioImages(userId, mockFiles);
+
+      // Verify the result contains only the new image URL
+      expect(results).toEqual(['https://example.com/images/new-image.jpg']);
+
+      // Check that the artist now has both the existing and new images
+      const updatedArtist = await Artist.findById(artistId);
+      expect(updatedArtist?.portfolio.images).toContain('https://example.com/images/existing-image.jpg');
+      expect(updatedArtist?.portfolio.images).toContain('https://example.com/images/new-image.jpg');
+      expect(updatedArtist?.portfolio.images.length).toBe(2);
+    });
+  });
 });

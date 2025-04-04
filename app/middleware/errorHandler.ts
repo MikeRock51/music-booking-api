@@ -32,4 +32,14 @@ const errorHandler: ErrorRequestHandler = (
   return;
 };
 
-export { errorHandler, AppError };
+const handleMultipartBoundryError = (req: Request, res: Response, next: NextFunction) => {
+  if (
+    req.headers["content-type"] &&
+    !req.headers["content-type"].includes("boundary")
+  ) {
+    const error = new AppError("No images uploaded", 400);
+    next(error);
+  }
+};
+
+export { errorHandler, AppError, handleMultipartBoundryError };

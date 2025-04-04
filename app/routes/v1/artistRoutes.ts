@@ -4,6 +4,7 @@ import { artistProfileValidator, updateArtistProfileValidator } from '../../vali
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
 import { upload } from '../../config/upload';
+import { AppError, handleMultipartBoundryError } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.post(
   '/portfolio/images',
   protect,
   restrictTo('artist'),
+  handleMultipartBoundryError,
   upload.array('images', 10),
   ArtistController.uploadPortfolioImages
 );

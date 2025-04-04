@@ -131,7 +131,12 @@ class ArtistControllerClass {
    * Upload portfolio images for the artist
    */
   async uploadPortfolioImages(req: Request, res: Response, next: NextFunction) {
+    console.log("Uploading portfolio images...");
     try {
+      if (req.headers['content-type'] && !req.headers['content-type'].includes('boundary')) {
+        throw new AppError("Multipart: Boundary not found", 400);
+      }
+
       const userId = req.user._id;
       // The files are accessible via req.files, thanks to multer middleware
       const files = req.files as Express.Multer.File[];
@@ -140,16 +145,19 @@ class ArtistControllerClass {
         throw new AppError("No images uploaded", 400);
       }
 
-      const imageUrls = await ArtistService.uploadPortfolioImages(userId, files);
+      const imageUrls = await ArtistService.uploadPortfolioImages(
+        userId,
+        files
+      );
 
       res.status(200).json({
         success: true,
         message: "Portfolio images uploaded successfully",
         data: {
-          imageUrls
-        }
+          imageUrls,
+        },
       });
-    } catch (error) {
+    } catch (error: any) {
       next(error);
     }
   }
