@@ -158,6 +158,11 @@ describe("AuthController", () => {
 
   describe("GET /v1/auth/me", () => {
     it("should return user profile when authenticated", async () => {
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch(error) {}
+      
       const response = await request(app)
         .get("/v1/auth/me")
         .set("Authorization", `Bearer ${userToken}`);
