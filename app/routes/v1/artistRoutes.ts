@@ -3,6 +3,7 @@ import { ArtistController } from '../../controllers/ArtistController';
 import { artistProfileValidator, updateArtistProfileValidator } from '../../validators/artistValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
+import { upload } from '../../config/upload';
 
 const router = Router();
 
@@ -27,6 +28,14 @@ router.put(
   updateArtistProfileValidator,
   validationMiddleware,
   ArtistController.updateMyProfile
+);
+
+router.post(
+  '/portfolio/images',
+  protect,
+  restrictTo('artist'),
+  upload.array('images', 10),
+  ArtistController.uploadPortfolioImages
 );
 
 router.get(

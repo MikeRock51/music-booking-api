@@ -3,6 +3,7 @@ import User, { UserRole } from "../models/User";
 import { AppError } from "../middleware/errorHandler";
 import { ArtistProfileInput } from "../interfaces/artist.interface";
 import mongoose from "mongoose";
+import { uploadFileToS3 } from "../config/upload";
 
 class ArtistService {
   /**
@@ -144,6 +145,30 @@ class ArtistService {
       });
 
     return artists;
+  }
+
+  /**
+   * Upload portfolio images for an artist
+   * @param userId - User ID of the artist
+   * @param files - Array of files to upload
+   * @returns Array of uploaded image URLs
+   */
+  async uploadPortfolioImages(userId: string, files: Express.Multer.File[]): Promise<string[]> {
+    // Find the artist by user ID
+    const artist = await Artist.findOne({ user: userId });
+    if (!artist) {
+      throw new AppError("Artist profile not found for this user", 404);
+    }
+
+    // Upload each file to S3 and get the URLs
+    const uploadPromises = files.map(file => uploadFileToS3(file, 'artist-portfolios/images'));
+    const imageUrls = await Promise.all(uploadPromises);
+
+    // Update the artist's portfolio with the new images
+    artist.portfolio.images = [...artist.portfolio.images, ...imageUrls];
+    await artist.save();
+
+    return imageUrls;
   }
 }
 
