@@ -11,6 +11,7 @@ describe("AuthController", () => {
   let userId: string;
   let adminToken: string;
   let testUser: any;
+  let adminUser: any;
 
   const testUserData = {
     email: "test1@authcontrollerexample.com",
@@ -40,7 +41,7 @@ describe("AuthController", () => {
     userToken = createToken(testUser);
 
     // Create admin user for testing
-    const adminUser = await createTestUser(testAdminUserData);
+    adminUser = await createTestUser(testAdminUserData);
     adminToken = createToken(adminUser);
   });
 
@@ -205,6 +206,12 @@ describe("AuthController", () => {
         userId: userId,
         role: UserRole.ARTIST,
       };
+
+      try {
+        adminUser = await createTestUser(testAdminUserData);
+        adminToken = createToken(adminUser);
+      } catch(error) {}
+
 
       const response = await request(app)
         .post("/v1/auth/user/upgrade")
