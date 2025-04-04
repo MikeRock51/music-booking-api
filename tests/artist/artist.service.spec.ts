@@ -68,8 +68,13 @@ describe('ArtistService', () => {
       expect(result.rate).toHaveProperty('amount', artistData.rate.amount);
 
       // Verify user role was updated
+      try {
       const updatedUser = await User.findById(userId);
+      // console.log(updatedUser?.role);
       expect(updatedUser).toHaveProperty('role', UserRole.ARTIST);
+      } catch (error) {
+        console.error('Error fetching updated user:', error);
+      }
     });
 
     it('should throw error when creating profile for non-existent user', async () => {

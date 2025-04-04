@@ -152,6 +152,11 @@ describe("Artist Controller", () => {
     });
 
     it("should return 404 when user has no artist profile", async () => {
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
+
       const response = await request(app)
         .get("/v1/artists/profile")
         .set("Authorization", `Bearer ${userToken}`);
