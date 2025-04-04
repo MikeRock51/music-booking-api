@@ -112,9 +112,14 @@ describe("AuthController", () => {
   describe("POST /v1/auth/login", () => {
     it("should login successfully with valid credentials", async () => {
       const loginData = {
-        email: "test1@authcontrollerexample.com",
-        password: "Password123!",
+        email: testUserData.email,
+        password: testUserData.password,
       };
+
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
 
       const response = await request(app)
         .post("/v1/auth/login")
@@ -161,8 +166,8 @@ describe("AuthController", () => {
       try {
         testUser = await createTestUser(testUserData);
         userToken = createToken(testUser);
-      } catch(error) {}
-      
+      } catch (error) {}
+
       const response = await request(app)
         .get("/v1/auth/me")
         .set("Authorization", `Bearer ${userToken}`);
