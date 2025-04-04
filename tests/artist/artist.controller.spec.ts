@@ -123,13 +123,19 @@ describe("Artist Controller", () => {
         // Missing other required fields
       };
 
+
+      try {
+        testArtist = await createTestUser(testArtistUserData);
+        artistToken = createToken(testArtist);
+      }
+      catch (error) {}
+
       const response = await request(app)
         .post("/v1/artists/profile")
         .set("Authorization", `Bearer ${artistToken}`)
         .send(invalidData);
 
       expect(response.status).toBe(400);
-      // Should have validation errors
       expect(response.body).toHaveProperty("status", "error");
     });
   });
