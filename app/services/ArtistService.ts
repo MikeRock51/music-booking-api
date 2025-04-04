@@ -1,7 +1,8 @@
-import Artist, { IArtist } from '../models/Artist';
-import User, { UserRole } from '../models/User';
-import { AppError } from '../middleware/errorHandler';
-import { ArtistProfileInput } from '../interfaces/artist.interface';
+import Artist, { IArtist } from "../models/Artist";
+import User, { UserRole } from "../models/User";
+import { AppError } from "../middleware/errorHandler";
+import { ArtistProfileInput } from "../interfaces/artist.interface";
+import mongoose from "mongoose";
 
 class ArtistService {
   /**
@@ -9,17 +10,20 @@ class ArtistService {
    * @param userId - User ID to associate with artist profile
    * @param artistData - Artist profile data
    */
-  async createArtistProfile(userId: string, artistData: ArtistProfileInput): Promise<IArtist> {
+  async createArtistProfile(
+    userId: string,
+    artistData: ArtistProfileInput
+  ): Promise<IArtist> {
     // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     // Check if user already has an artist profile
     const existingArtist = await Artist.findOne({ user: userId });
     if (existingArtist) {
-      throw new AppError('User already has an artist profile', 400);
+      throw new AppError("User already has an artist profile", 400);
     }
 
     // Update user role to artist
@@ -29,7 +33,7 @@ class ArtistService {
     // Create artist profile
     const artist = await Artist.create({
       user: userId,
-      ...artistData
+      ...artistData,
     });
 
     return artist;
@@ -40,9 +44,13 @@ class ArtistService {
    * @param artistId - Artist ID
    */
   async getArtistById(artistId: string): Promise<IArtist> {
+    if (!mongoose.Types.ObjectId.isValid(artistId)) {
+      throw new AppError("Invalid artist ID", 400);
+    }
+
     const artist = await Artist.findById(artistId);
     if (!artist) {
-      throw new AppError('Artist not found', 404);
+      throw new AppError("Artist not found", 404);
     }
     return artist;
   }
@@ -52,9 +60,13 @@ class ArtistService {
    * @param userId - User ID
    */
   async getArtistByUserId(userId: string): Promise<IArtist> {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new AppError("Invalid user ID", 400);
+    }
+
     const artist = await Artist.findOne({ user: userId });
     if (!artist) {
-      throw new AppError('Artist profile not found for this user', 404);
+      throw new AppError("Artist profile not found for this user", 404);
     }
     return artist;
   }
@@ -64,7 +76,10 @@ class ArtistService {
    * @param artistId - Artist ID
    * @param updateData - Artist profile update data
    */
-  async updateArtistProfile(artistId: string, updateData: any): Promise<IArtist> {
+  async updateArtistProfile(
+    artistId: string,
+    updateData: any
+  ): Promise<IArtist> {
     const artist = await Artist.findOneAndUpdate(
       { user: artistId },
       { ...updateData },
@@ -72,7 +87,7 @@ class ArtistService {
     );
 
     if (!artist) {
-      throw new AppError('Artist not found', 404);
+      throw new AppError("Artist not found", 404);
     }
 
     return artist;
@@ -94,16 +109,19 @@ class ArtistService {
 
     // Apply location filter
     if (filters.location) {
-      query.location = { $regex: filters.location, $options: 'i' };
+      query.location = { $regex: filters.location, $options: "i" };
     }
 
     // Apply rate range filter
     if (filters.minRate || filters.maxRate) {
       if (filters.minRate) {
-        query['rate.amount'] = { $gte: filters.minRate };
+        query["rate.amount"] = { $gte: filters.minRate };
       }
       if (filters.maxRate) {
-        query['rate.amount'] = { ...query['rate.amount'], $lte: filters.maxRate };
+        query["rate.amount"] = {
+          ...query["rate.amount"],
+          $lte: filters.maxRate,
+        };
       }
     }
 
@@ -121,8 +139,8 @@ class ArtistService {
       .skip(skip)
       .limit(limit)
       .populate({
-        path: 'user',
-        select: 'firstName lastName email profileImage'
+        path: "user",
+        select: "firstName lastName email profileImage",
       });
 
     return artists;
