@@ -193,6 +193,12 @@ describe("Artist Controller", () => {
         artistName: "Updated Artist Name",
       };
 
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      }
+      catch (error) {} // If an error is thrown, then the user already exist
+
       const response = await request(app)
         .put("/v1/artists/profile")
         .set("Authorization", `Bearer ${userToken}`)
