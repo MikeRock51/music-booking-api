@@ -202,16 +202,19 @@ describe("AuthController", () => {
 
   describe("POST /v1/auth/user/upgrade", () => {
     it("should upgrade user role when admin is authenticated", async () => {
-      const upgradeData = {
-        userId: userId,
-        role: UserRole.ARTIST,
-      };
-
       try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+        userId = testUser._id.toString();
+
         adminUser = await createTestUser(testAdminUserData);
         adminToken = createToken(adminUser);
       } catch(error) {}
 
+      const upgradeData = {
+        userId: userId,
+        role: UserRole.ARTIST,
+      };
 
       const response = await request(app)
         .post("/v1/auth/user/upgrade")
@@ -228,6 +231,12 @@ describe("AuthController", () => {
         userId: userId,
         role: UserRole.ADMIN,
       };
+
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+        userId = testUser._id.toString();
+      } catch (error) {}
 
       const response = await request(app)
         .post("/v1/auth/user/upgrade")
