@@ -5,11 +5,7 @@ import { createApp } from "../../app/createApp";
 import { initializeDatabase, closeDatabase } from "../../app/config/database";
 import User, { UserRole } from "../../app/models/User";
 import Venue, { VenueType } from "../../app/models/Venue";
-import {
-  createTestUser,
-  createToken,
-  testUserData,
-} from "../helpers";
+import { createTestUser, createToken, testUserData } from "../helpers";
 import "dotenv/config";
 
 describe("Venue Controller", () => {
@@ -33,8 +29,8 @@ describe("Venue Controller", () => {
       zipCode: "12345",
       coordinates: {
         latitude: 40.7128,
-        longitude: -74.0060,
-      }
+        longitude: -74.006,
+      },
     },
     capacity: 1000,
     venueType: VenueType.CONCERT_HALL,
@@ -43,8 +39,8 @@ describe("Venue Controller", () => {
     contactInfo: {
       email: "venue@testmail.com",
       phone: "+1234567890",
-      website: "https://testvenue.com"
-    }
+      website: "https://testvenue.com",
+    },
   };
 
   beforeAll(async () => {
@@ -62,20 +58,20 @@ describe("Venue Controller", () => {
     // Create users with different roles
     testUser = await createTestUser({
       ...testUserData,
-      email: `user${Date.now()}@venuetest.com`,
-      role: UserRole.USER
+      email: `user${Date.now()}@venuecontrollertest.com`,
+      role: UserRole.USER,
     });
 
     organizerUser = await createTestUser({
       ...testUserData,
-      email: `organizer${Date.now()}@venuetest.com`,
-      role: UserRole.ORGANIZER
+      email: `organizer${Date.now()}@venuecontrollertest.com`,
+      role: UserRole.ORGANIZER,
     });
 
     adminUser = await createTestUser({
       ...testUserData,
-      email: `admin${Date.now()}@venuetest.com`,
-      role: UserRole.ADMIN
+      email: `admin${Date.now()}@venuecontrollertest.com`,
+      role: UserRole.ADMIN,
     });
 
     // Generate tokens
@@ -86,12 +82,12 @@ describe("Venue Controller", () => {
     // Create a test venue
     testVenue = await Venue.create({
       ...testVenueData,
-      owner: organizerUser._id
+      owner: organizerUser._id,
     });
   });
 
   afterEach(async () => {
-    await User.deleteMany({ email: /@venuetest.com/ });
+    await User.deleteMany({ email: /@venuecontrollertest.com/ });
     await Venue.deleteMany({});
   });
 
@@ -99,8 +95,17 @@ describe("Venue Controller", () => {
     it("should create a venue when authenticated as organizer", async () => {
       const venueData = {
         ...testVenueData,
-        name: "New Test Venue"
+        name: "New Test Venue",
       };
+
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `neworganizer${Date.now()}@venuecontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      } catch (error) {}
 
       const response = await request(app)
         .post("/v1/venues")
@@ -110,13 +115,16 @@ describe("Venue Controller", () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty("name", venueData.name);
-      expect(response.body.data).toHaveProperty("owner", organizerUser._id.toString());
+      expect(response.body.data).toHaveProperty(
+        "owner",
+        organizerUser._id.toString()
+      );
     });
 
     it("should create a venue when authenticated as admin", async () => {
       const venueData = {
         ...testVenueData,
-        name: "Admin Created Venue"
+        name: "Admin Created Venue",
       };
 
       const response = await request(app)
@@ -130,6 +138,11 @@ describe("Venue Controller", () => {
     });
 
     it("should return 403 when authenticated as regular user", async () => {
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
+
       const response = await request(app)
         .post("/v1/venues")
         .set("Authorization", `Bearer ${userToken}`)
@@ -170,7 +183,10 @@ describe("Venue Controller", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty("_id", testVenue._id.toString());
+      expect(response.body.data).toHaveProperty(
+        "_id",
+        testVenue._id.toString()
+      );
       expect(response.body.data).toHaveProperty("name", testVenue.name);
     });
 
@@ -204,17 +220,17 @@ describe("Venue Controller", () => {
             city: "Big City",
             state: "New State",
             country: "USA",
-            zipCode: "54321"
+            zipCode: "54321",
           },
           capacity: 10000,
           venueType: VenueType.STADIUM,
           description: "A large stadium for events",
           contactInfo: {
             email: "stadium@test.com",
-            phone: "1234567890"
+            phone: "1234567890",
           },
           owner: organizerUser._id,
-          isVerified: true
+          isVerified: true,
         },
         {
           name: "Small Club",
@@ -223,26 +239,24 @@ describe("Venue Controller", () => {
             city: "Small Town",
             state: "Old State",
             country: "USA",
-            zipCode: "98765"
+            zipCode: "98765",
           },
           capacity: 200,
           venueType: VenueType.CLUB,
           description: "A cozy club for intimate performances",
           contactInfo: {
             email: "club@test.com",
-            phone: "0987654321"
+            phone: "0987654321",
           },
-          owner: organizerUser._id
-        }
+          owner: organizerUser._id,
+        },
       ];
 
       await Venue.insertMany(venues);
     });
 
     it("should return a list of venues", async () => {
-      const response = await request(app)
-        .get("/v1/venues")
-        .send();
+      const response = await request(app).get("/v1/venues").send();
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -272,8 +286,8 @@ describe("Venue Controller", () => {
       expect(response.body.success).toBe(true);
 
       // All venues should be in Small Town
-      const allInCity = response.body.data.every((venue: any) =>
-        venue.location.city === "Small Town"
+      const allInCity = response.body.data.every(
+        (venue: any) => venue.location.city === "Small Town"
       );
       expect(allInCity).toBe(true);
     });
@@ -288,8 +302,8 @@ describe("Venue Controller", () => {
       expect(response.body.success).toBe(true);
 
       // All venues should be of type STADIUM
-      const allStadiums = response.body.data.every((venue: any) =>
-        venue.venueType === VenueType.STADIUM
+      const allStadiums = response.body.data.every(
+        (venue: any) => venue.venueType === VenueType.STADIUM
       );
       expect(allStadiums).toBe(true);
     });
@@ -325,20 +339,20 @@ describe("Venue Controller", () => {
             city: `Test City ${i}`,
             state: "Test State",
             country: "Test Country",
-            zipCode: "12345"
+            zipCode: "12345",
           },
           capacity: 1000 * i,
           venueType: VenueType.CONCERT_HALL,
           description: `Pagination test venue ${i}`,
           contactInfo: {
             email: `venue${i}@test.com`,
-            phone: `12345${i}`
+            phone: `12345${i}`,
           },
-          owner: organizerUser._id
+          owner: organizerUser._id,
         });
 
         // Add a small delay to ensure created timestamps are different
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       // Get first page with 2 items per page, sorted by creation date (newest first)
@@ -360,11 +374,15 @@ describe("Venue Controller", () => {
       expect(page2Response.body.data.length).toBe(2);
 
       // Compare the IDs from the two pages - they should be completely different
-      const firstPageIds = new Set(page1Response.body.data.map((v: any) => v._id));
-      const secondPageIds = new Set(page2Response.body.data.map((v: any) => v._id));
+      const firstPageIds = new Set(
+        page1Response.body.data.map((v: any) => v._id)
+      );
+      const secondPageIds = new Set(
+        page2Response.body.data.map((v: any) => v._id)
+      );
 
       // Ensure no overlap between the two sets
-      const hasOverlap = [...firstPageIds].some(id => secondPageIds.has(id));
+      const hasOverlap = [...firstPageIds].some((id) => secondPageIds.has(id));
       expect(hasOverlap).toBe(false);
     });
   });
@@ -380,16 +398,16 @@ describe("Venue Controller", () => {
             city: "My City",
             state: "My State",
             country: "My Country",
-            zipCode: "12345"
+            zipCode: "12345",
           },
           capacity: 500,
           venueType: VenueType.CONCERT_HALL,
           description: "Organizer's first venue",
           contactInfo: {
             email: "venue1@organizer.com",
-            phone: "1234567890"
+            phone: "1234567890",
           },
-          owner: organizerUser._id
+          owner: organizerUser._id,
         },
         {
           name: "Organizer's Venue 2",
@@ -398,17 +416,17 @@ describe("Venue Controller", () => {
             city: "My City",
             state: "My State",
             country: "My Country",
-            zipCode: "12345"
+            zipCode: "12345",
           },
           capacity: 800,
           venueType: VenueType.CLUB,
           description: "Organizer's second venue",
           contactInfo: {
             email: "venue2@organizer.com",
-            phone: "0987654321"
+            phone: "0987654321",
           },
-          owner: organizerUser._id
-        }
+          owner: organizerUser._id,
+        },
       ]);
     });
 
@@ -431,9 +449,7 @@ describe("Venue Controller", () => {
     });
 
     it("should return 401 when not authenticated", async () => {
-      const response = await request(app)
-        .get("/v1/venues/my-venues")
-        .send();
+      const response = await request(app).get("/v1/venues/my-venues").send();
 
       expect(response.status).toBe(401);
     });
@@ -455,8 +471,8 @@ describe("Venue Controller", () => {
     it("should update a venue when authenticated as owner", async () => {
       const freshOrganizer = await createTestUser({
         ...testUserData,
-        email: `freshorganizer${Date.now()}@venuetest.com`,
-        role: UserRole.ORGANIZER
+        email: `freshorganizer${Date.now()}@venuecontrollertest.com`,
+        role: UserRole.ORGANIZER,
       });
 
       const freshOrganizerToken = createToken(freshOrganizer);
@@ -469,26 +485,28 @@ describe("Venue Controller", () => {
           city: "Update City",
           state: "Update State",
           country: "Update Country",
-          zipCode: "12345"
+          zipCode: "12345",
         },
         capacity: 500,
         venueType: VenueType.CONCERT_HALL,
         description: "A venue to be updated",
         contactInfo: {
           email: "update@test.com",
-          phone: "5551234567"
+          phone: "5551234567",
         },
-        owner: freshOrganizer._id
+        owner: freshOrganizer._id,
       });
 
       // Double check that the venue was created with the correct owner
       const savedVenue = await Venue.findById(venueToUpdate._id);
-      expect(savedVenue?.owner.toString()).toBe((freshOrganizer._id as ObjectId).toString());
+      expect(savedVenue?.owner.toString()).toBe(
+        (freshOrganizer._id as ObjectId).toString()
+      );
 
       const updateData = {
         name: "Updated Venue Name",
         description: "Updated venue description",
-        capacity: 1200
+        capacity: 1200,
       };
 
       const response = await request(app)
@@ -499,14 +517,20 @@ describe("Venue Controller", () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty("name", updateData.name);
-      expect(response.body.data).toHaveProperty("description", updateData.description);
-      expect(response.body.data).toHaveProperty("capacity", updateData.capacity);
+      expect(response.body.data).toHaveProperty(
+        "description",
+        updateData.description
+      );
+      expect(response.body.data).toHaveProperty(
+        "capacity",
+        updateData.capacity
+      );
     });
 
     it("should update a venue when authenticated as admin", async () => {
       const updateData = {
         name: "Admin Updated Venue",
-        isVerified: true
+        isVerified: true,
       };
 
       const response = await request(app)
@@ -522,7 +546,7 @@ describe("Venue Controller", () => {
 
     it("should return 403 when trying to update someone else's venue", async () => {
       const updateData = {
-        name: "Unauthorized Update"
+        name: "Unauthorized Update",
       };
 
       const response = await request(app)
@@ -535,7 +559,7 @@ describe("Venue Controller", () => {
 
     it("should return 401 when not authenticated", async () => {
       const updateData = {
-        name: "Unauthenticated Update"
+        name: "Unauthenticated Update",
       };
 
       const response = await request(app)
@@ -547,7 +571,7 @@ describe("Venue Controller", () => {
 
     it("should return 400 when validation fails", async () => {
       const invalidData = {
-        capacity: "not-a-number" // Should be a number
+        capacity: "not-a-number", // Should be a number
       };
 
       const response = await request(app)
@@ -564,8 +588,8 @@ describe("Venue Controller", () => {
       // Create a fresh organizer for this specific test
       const deleteTestOrganizer = await createTestUser({
         ...testUserData,
-        email: `deleteorganizer${Date.now()}@venuetest.com`,
-        role: UserRole.ORGANIZER
+        email: `deleteorganizer${Date.now()}@venuecontrollertest.com`,
+        role: UserRole.ORGANIZER,
       });
 
       const deleteOrganizerToken = createToken(deleteTestOrganizer);
@@ -578,21 +602,23 @@ describe("Venue Controller", () => {
           city: "Delete City",
           state: "Delete State",
           country: "Delete Country",
-          zipCode: "12345"
+          zipCode: "12345",
         },
         capacity: 300,
         venueType: VenueType.CLUB,
         description: "A venue to be deleted",
         contactInfo: {
           email: "delete@test.com",
-          phone: "5559876543"
+          phone: "5559876543",
         },
-        owner: deleteTestOrganizer._id
+        owner: deleteTestOrganizer._id,
       });
 
       // Verify the venue was created with the correct owner
       const savedVenue = await Venue.findById(venueToDelete._id);
-      expect(savedVenue?.owner.toString()).toBe((deleteTestOrganizer._id as ObjectId).toString());
+      expect(savedVenue?.owner.toString()).toBe(
+        (deleteTestOrganizer._id as ObjectId).toString()
+      );
 
       const response = await request(app)
         .delete(`/v1/venues/${(venueToDelete._id as ObjectId).toString()}`)
@@ -616,16 +642,16 @@ describe("Venue Controller", () => {
           city: "Admin City",
           state: "Admin State",
           country: "Admin Country",
-          zipCode: "54321"
+          zipCode: "54321",
         },
         capacity: 1500,
         venueType: VenueType.STADIUM,
         description: "A venue to be deleted by admin",
         contactInfo: {
           email: "admindelete@test.com",
-          phone: "5551112222"
+          phone: "5551112222",
         },
-        owner: organizerUser._id
+        owner: organizerUser._id,
       });
 
       const response = await request(app)
@@ -705,7 +731,7 @@ describe("Venue Controller", () => {
       // So we need to modify the test to simulate having files attached
       const freshVenue = await Venue.create({
         ...testVenueData,
-        owner: organizerUser._id // Create a venue owned by the organizer
+        owner: organizerUser._id, // Create a venue owned by the organizer
       });
 
       // Mock file upload request but from unauthorized user
@@ -713,7 +739,7 @@ describe("Venue Controller", () => {
         .post(`/v1/venues/${freshVenue._id}/images`)
         .set("Authorization", `Bearer ${userToken}`) // Regular user, not the owner
         .set("Content-Type", "multipart/form-data")
-        .attach('images', Buffer.from('test image content'), 'test-image.jpg'); // Attach a test file
+        .attach("images", Buffer.from("test image content"), "test-image.jpg"); // Attach a test file
 
       expect(response.status).toBe(403);
     });

@@ -57,6 +57,11 @@ describe("ArtistService", () => {
         },
       };
 
+      try {
+        testUser = await createTestUser(testUserData);
+        userId = testUser._id.toString();
+      } catch (error) {}
+
       const result = await ArtistService.createArtistProfile(
         userId,
         artistData

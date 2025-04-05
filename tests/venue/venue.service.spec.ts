@@ -11,6 +11,27 @@ describe("Venue Service", () => {
   let organizerUser: any;
   let adminUser: any;
   let testVenue: IVenue;
+  const adminUserData = {
+    email: `admin${Date.now()}@venueservice.test`,
+    password: "Password123!",
+    firstName: "Test",
+    lastName: "Admin",
+    role: UserRole.ADMIN,
+  };
+  const testUserData = {
+    email: `user${Date.now()}@venueservice.test`,
+    password: "Password123!",
+    firstName: "Test",
+    lastName: "User",
+    role: UserRole.USER,
+  };
+  const organizerUserData = {
+    email: `organizer${Date.now()}@venueservice.test`,
+    password: "Password123!",
+    firstName: "Test",
+    lastName: "Organizer",
+    role: UserRole.ORGANIZER,
+  };
 
   // Test venue data
   const testVenueData = {
@@ -42,36 +63,18 @@ describe("Venue Service", () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany({});
+    await User.deleteMany({email: /@venueservice.test/});
     await Venue.deleteMany({});
     await closeDatabase();
   });
 
   beforeEach(async () => {
     // Create test users with different roles
-    testUser = await createTestUser({
-      email: `user${Date.now()}@venueservice.test`,
-      password: "Password123!",
-      firstName: "Test",
-      lastName: "User",
-      role: UserRole.USER,
-    });
+    testUser = await createTestUser(testUserData);
 
-    organizerUser = await createTestUser({
-      email: `organizer${Date.now()}@venueservice.test`,
-      password: "Password123!",
-      firstName: "Test",
-      lastName: "Organizer",
-      role: UserRole.ORGANIZER,
-    });
+    organizerUser = await createTestUser(organizerUserData);
 
-    adminUser = await createTestUser({
-      email: `admin${Date.now()}@venueservice.test`,
-      password: "Password123!",
-      firstName: "Test",
-      lastName: "Admin",
-      role: UserRole.ADMIN,
-    });
+    adminUser = await createTestUser(adminUserData);
 
     // Create a test venue
     testVenue = await Venue.create({
@@ -91,6 +94,10 @@ describe("Venue Service", () => {
         ...testVenueData,
         name: "New Service Test Venue",
       };
+
+      try {
+        organizerUser = await createTestUser(organizerUserData);
+      } catch (error) {}
 
       const venue = await VenueService.createVenue(
         (organizerUser._id as Types.ObjectId).toString(),
@@ -437,11 +444,9 @@ describe("Venue Service", () => {
 
       venues.forEach((venue) => {
         // Check if owner is populated (object) or just an ID
-        const venueOwnerId = venue.owner._id.toString()
+        const venueOwnerId = venue.owner._id.toString();
 
-        expect(venueOwnerId).toBe(
-          (testUser._id as Types.ObjectId).toString()
-        );
+        expect(venueOwnerId).toBe((testUser._id as Types.ObjectId).toString());
       });
     });
 

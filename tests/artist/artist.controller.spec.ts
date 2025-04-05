@@ -171,7 +171,7 @@ describe("Artist Controller", () => {
         testArtist = await createTestUser(testArtistUserData);
         artistToken = createToken(testArtist);
         testArtistData.user = testArtist._id;
-        testArtist = await createTestArtist(testArtistData);
+        await createTestArtist(testArtistData);
       } catch (error) {} // If an error is thrown, then the user already exist
 
       const response = await request(app)
