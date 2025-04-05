@@ -249,8 +249,6 @@ class EventService {
 
     // Price range filter
     if (filters.minPrice || filters.maxPrice) {
-      query.ticketInfo = query.ticketInfo || {};
-
       if (filters.minPrice) {
         query["ticketInfo.price"] = { $gte: Number(filters.minPrice) };
       }
