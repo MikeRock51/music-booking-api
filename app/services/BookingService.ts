@@ -2,7 +2,7 @@ import Booking, { IBooking, BookingStatus, PaymentStatus } from '../models/Booki
 import Event from '../models/Event';
 import Artist from '../models/Artist';
 import { AppError } from '../middleware/errorHandler';
-import mongoose from 'mongoose';
+import { CreateBookingInput } from '../interfaces/booking.interface';
 
 class BookingService {
   /**
@@ -10,7 +10,7 @@ class BookingService {
    * @param userId - User ID making the booking
    * @param bookingData - Booking details
    */
-  async createBooking(userId: string, bookingData: any): Promise<IBooking> {
+  async createBooking(userId: string, bookingData: CreateBookingInput): Promise<IBooking> {
     // Check if event exists
     const event = await Event.findById(bookingData.event);
     if (!event) {

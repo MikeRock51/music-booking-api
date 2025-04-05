@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import BookingService from '../services/BookingService';
 import ArtistService from '../services/ArtistService';
 import { BookingStatus } from '../models/Booking';
+import { CreateBookingInput } from '../interfaces/booking.interface';
 
 class BookingControllerClass {
   /**
@@ -10,7 +11,7 @@ class BookingControllerClass {
   async createBooking(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user._id;
-      const bookingData = req.body;
+      const bookingData: CreateBookingInput = req.body;
 
       const booking = await BookingService.createBooking(userId, bookingData);
 
