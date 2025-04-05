@@ -2,6 +2,7 @@ import Event, { IEvent, EventStatus } from "../models/Event";
 import { AppError } from "../middleware/errorHandler";
 import mongoose from "mongoose";
 import Venue from "../models/Venue";
+import { IUser, UserRole } from "../models/User";
 
 class EventService {
   /**
@@ -62,16 +63,16 @@ class EventService {
    */
   async updateEvent(
     eventId: string,
-    organizerId: string,
+    organizer: IUser,
     updateData: any
   ): Promise<IEvent> {
     // Check if event exists and belongs to the organizer
     const event = await Event.findOne({
       _id: eventId,
-      organizer: organizerId,
+      organizer: organizer._id,
     });
 
-    if (!event) {
+    if (!event && organizer.role !== UserRole.ADMIN) {
       throw new AppError(
         "Event not found or you are not authorized to update it",
         404

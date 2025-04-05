@@ -46,10 +46,10 @@ class EventControllerClass {
   async updateEvent(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const organizerId = req.user._id;
+      const organizer = req.user;
       const updateData = req.body;
 
-      const updatedEvent = await EventService.updateEvent(id, organizerId, updateData);
+      const updatedEvent = await EventService.updateEvent(id, organizer, updateData);
 
       res.status(200).json({
         success: true,
