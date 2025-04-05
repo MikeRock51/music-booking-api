@@ -126,6 +126,14 @@ describe("Venue Controller", () => {
         ...testVenueData,
         name: "Admin Created Venue",
       };
+      try {
+        adminUser = await createTestUser({
+          ...testUserData,
+          email: `newadmin${Date.now()}@venuecontrollertest.com`,
+          role: UserRole.ADMIN,
+        });
+        adminToken = createToken(adminUser);
+      } catch (error) {}
 
       const response = await request(app)
         .post("/v1/venues")

@@ -81,6 +81,7 @@ class ArtistService {
     artistId: string,
     updateData: any
   ): Promise<IArtist> {
+    
     const artist = await Artist.findOneAndUpdate(
       { user: artistId },
       { ...updateData },

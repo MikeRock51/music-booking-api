@@ -22,6 +22,7 @@ describe("Artist Controller", () => {
   let testArtist: any;
   let userToken: string;
   let artistToken: string;
+  let artistUser: any;
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -39,7 +40,7 @@ describe("Artist Controller", () => {
     testUser = await createTestUser(testUserData);
 
     // Create a user with artist role
-    const artistUser = await createTestUser(testArtistUserData);
+    artistUser = await createTestUser(testArtistUserData);
 
     // Create an artist profile for the artist user
     testArtistData.user = artistUser._id;
@@ -168,10 +169,10 @@ describe("Artist Controller", () => {
       };
 
       try {
-        testArtist = await createTestUser(testArtistUserData);
-        artistToken = createToken(testArtist);
+        artistUser = await createTestUser(testArtistUserData);
+        artistToken = createToken(artistUser);
         testArtistData.user = testArtist._id;
-        await createTestArtist(testArtistData);
+        testArtist = await createTestArtist(testArtistData);
       } catch (error) {} // If an error is thrown, then the user already exist
 
       const response = await request(app)
