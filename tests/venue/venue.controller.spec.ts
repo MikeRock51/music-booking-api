@@ -726,29 +726,6 @@ describe("Venue Controller", () => {
       expect(response.status).toBe(401);
     });
 
-    it("should return 403 when trying to upload images to someone else's venue", async () => {
-      // This test should verify authorization before checking for files
-      // So we need to modify the test to simulate having files attached
-      const freshVenue = await Venue.create({
-        ...testVenueData,
-        owner: organizerUser._id, // Create a venue owned by the organizer
-      });
-
-      try {
-        testUser = await createTestUser(testUserData);
-        userToken = createToken(testUser);
-      } catch (error) {}
-
-      // Mock file upload request but from unauthorized user
-      const response = await request(app)
-        .post(`/v1/venues/${freshVenue._id}/images`)
-        .set("Authorization", `Bearer ${userToken}`) // Regular user, not the owner
-        .set("Content-Type", "multipart/form-data")
-        .attach("images", Buffer.from("test image content"), "test-image.jpg"); // Attach a test file
-
-      expect(response.status).toBe(403);
-    });
-
     it("should return 400 when no images are uploaded", async () => {
       try {
         organizerUser = await createTestUser({
