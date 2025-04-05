@@ -745,6 +745,15 @@ describe("Venue Controller", () => {
     });
 
     it("should return 400 when no images are uploaded", async () => {
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `neworganizer${Date.now()}@venuecontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      } catch (error) {}
+
       const response = await request(app)
         .post(`/v1/venues/${testVenue._id}/images`)
         .set("Authorization", `Bearer ${organizerToken}`)
