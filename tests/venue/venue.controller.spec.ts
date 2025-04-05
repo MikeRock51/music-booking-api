@@ -734,6 +734,11 @@ describe("Venue Controller", () => {
         owner: organizerUser._id, // Create a venue owned by the organizer
       });
 
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
+
       // Mock file upload request but from unauthorized user
       const response = await request(app)
         .post(`/v1/venues/${freshVenue._id}/images`)
