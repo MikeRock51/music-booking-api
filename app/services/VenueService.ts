@@ -55,8 +55,6 @@ class VenueService {
       .skip(skip)
       .limit(limit);
 
-    const total = await Venue.countDocuments({ owner: userId });
-
     return venues;
   }
 
@@ -180,8 +178,6 @@ class VenueService {
       .skip(skip)
       .limit(limit)
       .populate('owner', 'firstName lastName');
-
-    const total = await Venue.countDocuments(query);
 
     return venues;
   }

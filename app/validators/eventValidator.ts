@@ -1,5 +1,5 @@
 import { body, param, query } from 'express-validator';
-import { EventType } from '../models/Event';
+import { EventStatus, EventType } from '../models/Event';
 
 export const createEventValidator = [
   body('name')
@@ -58,7 +58,11 @@ export const createEventValidator = [
   body('isPrivate')
     .optional()
     .isBoolean()
-    .withMessage('isPrivate must be a boolean')
+    .withMessage('isPrivate must be a boolean'),
+  body('status')
+    .optional()
+    .isIn([EventStatus.DRAFT, EventStatus.PUBLISHED])
+    .withMessage('Invalid event status')
 ];
 
 export const updateEventValidator = [

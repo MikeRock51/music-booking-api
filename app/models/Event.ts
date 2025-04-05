@@ -4,7 +4,7 @@ export enum EventStatus {
   DRAFT = "draft",
   PUBLISHED = "published",
   CANCELED = "canceled",
-  COMPLETED = "completed"
+  COMPLETED = "completed",
 }
 
 export enum EventType {
@@ -13,7 +13,7 @@ export enum EventType {
   PRIVATE_EVENT = "private_event",
   CORPORATE_EVENT = "corporate_event",
   WEDDING = "wedding",
-  OTHER = "other"
+  OTHER = "other",
 }
 
 export interface IEvent extends Document {
@@ -46,76 +46,78 @@ const EventSchema = new Schema<IEvent>(
     name: {
       type: String,
       required: [true, "Event name is required"],
-      trim: true
+      trim: true,
     },
     description: {
       type: String,
-      required: [true, "Event description is required"]
+      required: [true, "Event description is required"],
     },
     eventType: {
       type: String,
       enum: Object.values(EventType),
-      required: [true, "Event type is required"]
+      required: [true, "Event type is required"],
     },
     date: {
       start: {
         type: Date,
-        required: [true, "Event start date is required"]
+        required: [true, "Event start date is required"],
       },
       end: {
         type: Date,
-        required: [true, "Event end date is required"]
-      }
+        required: [true, "Event end date is required"],
+      },
     },
     venue: {
       type: Schema.Types.ObjectId,
       ref: "Venue",
-      required: [true, "Venue is required"]
+      required: [true, "Venue is required"],
     },
     organizer: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Organizer is required"]
+      required: [true, "Organizer is required"],
     },
-    featuredArtists: [{
-      type: Schema.Types.ObjectId,
-      ref: "Artist"
-    }],
+    featuredArtists: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Artist",
+      },
+    ],
     ticketInfo: {
       available: {
         type: Boolean,
-        default: true
+        default: true,
       },
       price: {
         type: Number,
-        required: [true, "Ticket price is required"]
+        required: [true, "Ticket price is required"],
       },
       currency: {
         type: String,
-        default: "USD"
+        default: "USD",
       },
       totalTickets: {
         type: Number,
-        required: [true, "Total tickets count is required"]
+        required: [true, "Total tickets count is required"],
       },
       soldTickets: {
         type: Number,
-        default: 0
-      }
+        default: 0,
+      },
     },
     images: [String],
     status: {
       type: String,
       enum: Object.values(EventStatus),
-      default: EventStatus.DRAFT
+      default: EventStatus.DRAFT,
     },
     isPrivate: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
@@ -124,5 +126,7 @@ EventSchema.index({ "date.start": 1 });
 EventSchema.index({ venue: 1 });
 EventSchema.index({ organizer: 1 });
 EventSchema.index({ status: 1 });
+// Unique compound index to prevent duplicate events
+EventSchema.index({ name: 1, venue: 1, "date.start": 1 }, { unique: true });
 
 export default mongoose.model<IEvent>("Event", EventSchema);

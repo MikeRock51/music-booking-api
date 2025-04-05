@@ -19,7 +19,7 @@ router.get(
   '/',
   searchEventsValidator,
   validationMiddleware,
-  EventController.searchEvents
+  EventController.findEvents
 );
 
 router.get(

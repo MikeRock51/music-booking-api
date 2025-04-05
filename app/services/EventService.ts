@@ -1,7 +1,7 @@
-import Event, { IEvent, EventStatus } from '../models/Event';
-import { AppError } from '../middleware/errorHandler';
-import mongoose from 'mongoose';
-import Venue from '../models/Venue';
+import Event, { IEvent, EventStatus } from "../models/Event";
+import { AppError } from "../middleware/errorHandler";
+import mongoose from "mongoose";
+import Venue from "../models/Venue";
 
 class EventService {
   /**
@@ -13,17 +13,28 @@ class EventService {
     // Verify venue exists
     const venue = await Venue.findById(eventData.venue);
     if (!venue) {
-      throw new AppError('Venue not found', 404);
+      throw new AppError("Venue not found", 404);
     }
 
-    // Create the event
-    const event = await Event.create({
-      ...eventData,
-      organizer: organizerId,
-      status: EventStatus.DRAFT
-    });
+    try {
+      // Create the event
+      const event = await Event.create({
+        ...eventData,
+        organizer: organizerId,
+      });
 
-    return event;
+      return event;
+    } catch (error: any) {
+      // Check for duplicate key error (MongoDB error code 11000)
+      if (error.code === 11000 && error.keyPattern) {
+        throw new AppError(
+          "An event with the same name at this venue and date already exists.",
+          409
+        );
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   /**
@@ -32,12 +43,12 @@ class EventService {
    */
   async getEventById(eventId: string): Promise<IEvent> {
     const event = await Event.findById(eventId)
-      .populate('venue')
-      .populate('organizer', 'firstName lastName email')
-      .populate('featuredArtists');
+      .populate("venue")
+      .populate("organizer", "firstName lastName email")
+      .populate("featuredArtists");
 
     if (!event) {
-      throw new AppError('Event not found', 404);
+      throw new AppError("Event not found", 404);
     }
 
     return event;
@@ -49,40 +60,58 @@ class EventService {
    * @param organizerId - User ID of the organizer (for authorization)
    * @param updateData - Event update data
    */
-  async updateEvent(eventId: string, organizerId: string, updateData: any): Promise<IEvent> {
+  async updateEvent(
+    eventId: string,
+    organizerId: string,
+    updateData: any
+  ): Promise<IEvent> {
     // Check if event exists and belongs to the organizer
     const event = await Event.findOne({
       _id: eventId,
-      organizer: organizerId
+      organizer: organizerId,
     });
 
     if (!event) {
-      throw new AppError('Event not found or you are not authorized to update it', 404);
+      throw new AppError(
+        "Event not found or you are not authorized to update it",
+        404
+      );
     }
 
     // If venue is being updated, verify it exists
     if (updateData.venue) {
       const venue = await Venue.findById(updateData.venue);
       if (!venue) {
-        throw new AppError('Venue not found', 404);
+        throw new AppError("Venue not found", 404);
       }
     }
 
-    // Update the event
-    const updatedEvent = await Event.findByIdAndUpdate(
-      eventId,
-      updateData,
-      { new: true, runValidators: true }
-    )
-    .populate('venue')
-    .populate('organizer', 'firstName lastName email')
-    .populate('featuredArtists');
+    try {
+      // Update the event
+      const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, {
+        new: true,
+        runValidators: true,
+      })
+        .populate("venue")
+        .populate("organizer", "firstName lastName email")
+        .populate("featuredArtists");
 
-    if (!updatedEvent) {
-      throw new AppError('Failed to update event', 500);
+      if (!updatedEvent) {
+        throw new AppError("Failed to update event", 500);
+      }
+
+      return updatedEvent;
+    } catch (error: any) {
+      // Check for duplicate key error (MongoDB error code 11000)
+      if (error.code === 11000 && error.keyPattern) {
+        throw new AppError(
+          " event with the same name at this venue and date already exists.",
+          409
+        );
+      }
+      // Re-throw other errors
+      throw error;
     }
-
-    return updatedEvent;
   }
 
   /**
@@ -93,15 +122,18 @@ class EventService {
   async publishEvent(eventId: string, organizerId: string): Promise<IEvent> {
     const event = await Event.findOne({
       _id: eventId,
-      organizer: organizerId
+      organizer: organizerId,
     });
 
     if (!event) {
-      throw new AppError('Event not found or you are not authorized to update it', 404);
+      throw new AppError(
+        "Event not found or you are not authorized to update it",
+        404
+      );
     }
 
     if (event.status === EventStatus.PUBLISHED) {
-      throw new AppError('Event is already published', 400);
+      throw new AppError("Event is already published", 400);
     }
 
     event.status = EventStatus.PUBLISHED;
@@ -118,15 +150,18 @@ class EventService {
   async cancelEvent(eventId: string, organizerId: string): Promise<IEvent> {
     const event = await Event.findOne({
       _id: eventId,
-      organizer: organizerId
+      organizer: organizerId,
     });
 
     if (!event) {
-      throw new AppError('Event not found or you are not authorized to cancel it', 404);
+      throw new AppError(
+        "Event not found or you are not authorized to cancel it",
+        404
+      );
     }
 
     if (event.status === EventStatus.CANCELED) {
-      throw new AppError('Event is already canceled', 400);
+      throw new AppError("Event is already canceled", 400);
     }
 
     event.status = EventStatus.CANCELED;
@@ -141,24 +176,21 @@ class EventService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async getOrganizerEvents(organizerId: string, page = 1, limit = 10): Promise<{ events: IEvent[], total: number, page: number, pages: number }> {
+  async getOrganizerEvents(
+    organizerId: string,
+    page = 1,
+    limit = 10
+  ): Promise<IEvent[]> {
     const skip = (page - 1) * limit;
 
     const events = await Event.find({ organizer: organizerId })
-      .sort({ 'date.start': 1 })
+      .sort({ "date.start": 1 })
       .skip(skip)
       .limit(limit)
-      .populate('venue', 'name location')
-      .populate('featuredArtists', 'artistName');
+      .populate("venue", "name location")
+      .populate("featuredArtists", "artistName");
 
-    const total = await Event.countDocuments({ organizer: organizerId });
-
-    return {
-      events,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
-    };
+    return events;
   }
 
   /**
@@ -167,19 +199,23 @@ class EventService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async searchEvents(filters: any, page = 1, limit = 10): Promise<{ events: IEvent[], total: number, page: number, pages: number }> {
+  async findEvents(
+    filters: any,
+    page = 1,
+    limit = 10
+  ): Promise<IEvent[]> {
     const query: any = {
       status: EventStatus.PUBLISHED,
-      isPrivate: false
+      isPrivate: false,
     };
 
     // Date filters
     if (filters.startDate) {
-      query['date.start'] = { $gte: new Date(filters.startDate) };
+      query["date.start"] = { $gte: new Date(filters.startDate) };
     }
 
     if (filters.endDate) {
-      query['date.end'] = { $lte: new Date(filters.endDate) };
+      query["date.end"] = { $lte: new Date(filters.endDate) };
     }
 
     // Location filter (will search in venue's city or address)
@@ -187,12 +223,12 @@ class EventService {
       // First find venues in the location
       const venues = await Venue.find({
         $or: [
-          { 'location.city': { $regex: filters.location, $options: 'i' } },
-          { 'location.address': { $regex: filters.location, $options: 'i' } }
-        ]
-      }).select('_id');
+          { "location.city": { $regex: filters.location, $options: "i" } },
+          { "location.address": { $regex: filters.location, $options: "i" } },
+        ],
+      }).select("_id");
 
-      const venueIds = venues.map(v => v._id);
+      const venueIds = venues.map((v) => v._id);
       query.venue = { $in: venueIds };
     }
 
@@ -204,8 +240,10 @@ class EventService {
     // Venue type filter
     if (filters.venueType) {
       // Find venues of the specified type
-      const venues = await Venue.find({ venueType: filters.venueType }).select('_id');
-      const venueIds = venues.map(v => v._id);
+      const venues = await Venue.find({ venueType: filters.venueType }).select(
+        "_id"
+      );
+      const venueIds = venues.map((v) => v._id);
       query.venue = { $in: venueIds };
     }
 
@@ -214,13 +252,13 @@ class EventService {
       query.ticketInfo = query.ticketInfo || {};
 
       if (filters.minPrice) {
-        query['ticketInfo.price'] = { $gte: Number(filters.minPrice) };
+        query["ticketInfo.price"] = { $gte: Number(filters.minPrice) };
       }
 
       if (filters.maxPrice) {
-        query['ticketInfo.price'] = {
-          ...query['ticketInfo.price'],
-          $lte: Number(filters.maxPrice)
+        query["ticketInfo.price"] = {
+          ...query["ticketInfo.price"],
+          $lte: Number(filters.maxPrice),
         };
       }
     }
@@ -233,21 +271,14 @@ class EventService {
     const skip = (page - 1) * limit;
 
     const events = await Event.find(query)
-      .sort({ 'date.start': 1 })
+      .sort({ "date.start": 1 })
       .skip(skip)
       .limit(limit)
-      .populate('venue', 'name location venueType')
-      .populate('organizer', 'firstName lastName')
-      .populate('featuredArtists', 'artistName genres');
+      .populate("venue", "name location venueType")
+      .populate("organizer", "firstName lastName")
+      .populate("featuredArtists", "artistName genres");
 
-    const total = await Event.countDocuments(query);
-
-    return {
-      events,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
-    };
+    return events;
   }
 }
 

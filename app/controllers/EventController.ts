@@ -109,7 +109,7 @@ class EventControllerClass {
       const organizerId = req.user._id;
       const { page = 1, limit = 10 } = req.query;
 
-      const result = await EventService.getOrganizerEvents(
+      const events = await EventService.getOrganizerEvents(
         organizerId,
         Number(page),
         Number(limit)
@@ -117,12 +117,7 @@ class EventControllerClass {
 
       res.status(200).json({
         success: true,
-        data: result.events,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: events
       });
     } catch (error) {
       next(error);
@@ -132,7 +127,7 @@ class EventControllerClass {
   /**
    * Search events with filters
    */
-  async searchEvents(req: Request, res: Response, next: NextFunction) {
+  async findEvents(req: Request, res: Response, next: NextFunction) {
     try {
       const {
         startDate,
@@ -158,7 +153,7 @@ class EventControllerClass {
       if (maxPrice) filters.maxPrice = maxPrice;
       if (artistId) filters.artistId = artistId;
 
-      const result = await EventService.searchEvents(
+      const events = await EventService.findEvents(
         filters,
         Number(page),
         Number(limit)
@@ -166,12 +161,7 @@ class EventControllerClass {
 
       res.status(200).json({
         success: true,
-        data: result.events,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: events
       });
     } catch (error) {
       next(error);
