@@ -55,12 +55,7 @@ class VenueControllerClass {
 
       res.status(200).json({
         success: true,
-        data: result.venues,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: result,
       });
     } catch (error) {
       next(error);
@@ -143,12 +138,7 @@ class VenueControllerClass {
 
       res.status(200).json({
         success: true,
-        data: result.venues,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: result,
       });
     } catch (error) {
       next(error);

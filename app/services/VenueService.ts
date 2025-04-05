@@ -47,7 +47,7 @@ class VenueService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async getUserVenues(userId: string, page = 1, limit = 10): Promise<{ venues: IVenue[], total: number, page: number, pages: number }> {
+  async getUserVenues(userId: string, page = 1, limit = 10): Promise<IVenue[]> {
     const skip = (page - 1) * limit;
 
     const venues = await Venue.find({ owner: userId })
@@ -57,12 +57,7 @@ class VenueService {
 
     const total = await Venue.countDocuments({ owner: userId });
 
-    return {
-      venues,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
-    };
+    return venues;
   }
 
   /**
@@ -81,7 +76,7 @@ class VenueService {
     }
 
     const isAdmin = user.role === UserRole.ADMIN;
-    const isOwner = venue.owner.toString() === userId;
+    const isOwner = venue.owner._id.toString() === userId.toString();
 
     if (!isOwner && !isAdmin) {
       throw new AppError('You are not authorized to update this venue', 403);
@@ -114,7 +109,7 @@ class VenueService {
     }
 
     const isAdmin = user.role === UserRole.ADMIN;
-    const isOwner = venue.owner.toString() === userId;
+    const isOwner = venue.owner._id.toString() === userId.toString();
 
     if (!isOwner && !isAdmin) {
       throw new AppError('You are not authorized to delete this venue', 403);
@@ -129,7 +124,7 @@ class VenueService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async findVenues(filters: VenueFilters = {}, page = 1, limit = 10): Promise<{ venues: IVenue[], total: number, page: number, pages: number }> {
+  async findVenues(filters: VenueFilters = {}, page = 1, limit = 10): Promise<IVenue[]> {
     const query: any = {};
 
     // Apply filters
@@ -187,12 +182,7 @@ class VenueService {
 
     const total = await Venue.countDocuments(query);
 
-    return {
-      venues,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
-    };
+    return venues
   }
 
   /**
@@ -203,7 +193,7 @@ class VenueService {
    */
   async uploadVenueImages(venueId: string, userId: string, files: Express.Multer.File[]): Promise<string[]> {
     const venue = await this.getVenueById(venueId);
-    
+
     // Check authorization: only the owner or an admin can upload images
     const isAdmin = (await User.findById(userId))?.role === UserRole.ADMIN;
     const isOwner = venue.owner.toString() === userId;
