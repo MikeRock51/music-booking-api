@@ -39,6 +39,9 @@ const handleMultipartBoundryError = (req: Request, res: Response, next: NextFunc
   ) {
     const error = new AppError("No images uploaded", 400);
     next(error);
+  } else {
+    // Proceed to the next middleware if the boundary is present
+    next();
   }
 };
 

@@ -58,6 +58,17 @@ A comprehensive RESTful API for a Music Booking platform that handles artist pro
 - `PATCH /events/:id/publish` - Publish event
 - `PATCH /events/:id/cancel` - Cancel event
 
+### Venues
+
+- `POST /venues` - Create a new venue
+- `GET /venues` - Search venues with filters
+- `GET /venues/my-venues` - Get venues owned by logged-in user
+- `GET /venues/:id` - Get venue by ID
+- `PUT /venues/:id` - Update venue details
+- `DELETE /venues/:id` - Delete venue
+- `POST /venues/:id/images` - Upload venue images
+- `PATCH /venues/:id/verify` - Verify venue (admin only)
+
 ### Bookings
 
 - `POST /bookings` - Create a booking request
