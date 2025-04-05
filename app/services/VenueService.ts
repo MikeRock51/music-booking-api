@@ -174,15 +174,16 @@ class VenueService {
 
     const skip = (page - 1) * limit;
 
+    // Ensure consistent and reliable pagination by sorting by _id as a secondary sort
     const venues = await Venue.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(limit)
       .populate('owner', 'firstName lastName');
 
     const total = await Venue.countDocuments(query);
 
-    return venues
+    return venues;
   }
 
   /**
@@ -196,7 +197,7 @@ class VenueService {
 
     // Check authorization: only the owner or an admin can upload images
     const isAdmin = (await User.findById(userId))?.role === UserRole.ADMIN;
-    const isOwner = venue.owner.toString() === userId;
+    const isOwner = venue.owner._id.toString() === userId.toString();
 
     if (!isOwner && !isAdmin) {
       throw new AppError('You are not authorized to upload images for this venue', 403);

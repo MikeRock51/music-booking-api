@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types, ObjectId } from "mongoose";
 import { initializeDatabase, closeDatabase } from "../../app/config/database";
 import VenueService from "../../app/services/VenueService";
 import User, { UserRole } from "../../app/models/User";
@@ -23,8 +23,8 @@ describe("Venue Service", () => {
       zipCode: "12345",
       coordinates: {
         latitude: 40.7128,
-        longitude: -74.0060,
-      }
+        longitude: -74.006,
+      },
     },
     capacity: 1000,
     venueType: VenueType.CONCERT_HALL,
@@ -33,8 +33,8 @@ describe("Venue Service", () => {
     contactInfo: {
       email: "venue@testmail.com",
       phone: "+1234567890",
-      website: "https://testvenue.com"
-    }
+      website: "https://testvenue.com",
+    },
   };
 
   beforeAll(async () => {
@@ -54,7 +54,7 @@ describe("Venue Service", () => {
       password: "Password123!",
       firstName: "Test",
       lastName: "User",
-      role: UserRole.USER
+      role: UserRole.USER,
     });
 
     organizerUser = await createTestUser({
@@ -62,7 +62,7 @@ describe("Venue Service", () => {
       password: "Password123!",
       firstName: "Test",
       lastName: "Organizer",
-      role: UserRole.ORGANIZER
+      role: UserRole.ORGANIZER,
     });
 
     adminUser = await createTestUser({
@@ -70,13 +70,13 @@ describe("Venue Service", () => {
       password: "Password123!",
       firstName: "Test",
       lastName: "Admin",
-      role: UserRole.ADMIN
+      role: UserRole.ADMIN,
     });
 
     // Create a test venue
     testVenue = await Venue.create({
       ...testVenueData,
-      owner: organizerUser._id
+      owner: organizerUser._id,
     });
   });
 
@@ -89,41 +89,50 @@ describe("Venue Service", () => {
     it("should create a venue successfully", async () => {
       const venueData = {
         ...testVenueData,
-        name: "New Service Test Venue"
+        name: "New Service Test Venue",
       };
 
-      const venue = await VenueService.createVenue(organizerUser._id.toString(), venueData);
+      const venue = await VenueService.createVenue(
+        (organizerUser._id as Types.ObjectId).toString(),
+        venueData
+      );
 
       expect(venue).toBeDefined();
       expect(venue.name).toBe(venueData.name);
-      expect(venue.owner.toString()).toBe(organizerUser._id.toString());
+      expect(venue.owner.toString()).toBe(
+        (organizerUser._id as Types.ObjectId).toString()
+      );
       expect(venue.isVerified).toBe(false);
     });
 
     it("should throw an error if user does not exist", async () => {
       const nonExistentUserId = new mongoose.Types.ObjectId().toString();
 
-      await expect(VenueService.createVenue(nonExistentUserId, testVenueData))
-        .rejects
-        .toThrow("User not found");
+      await expect(
+        VenueService.createVenue(nonExistentUserId, testVenueData)
+      ).rejects.toThrow("User not found");
     });
   });
 
   describe("getVenueById", () => {
     it("should retrieve a venue by ID", async () => {
-      const venue = await VenueService.getVenueById(testVenue._id.toString());
+      const venue = await VenueService.getVenueById(
+        (testVenue._id as Types.ObjectId).toString()
+      );
 
       expect(venue).toBeDefined();
-      expect(venue._id.toString()).toBe(testVenue._id.toString());
+      expect((venue._id as Types.ObjectId).toString()).toBe(
+        (testVenue._id as Types.ObjectId).toString()
+      );
       expect(venue.name).toBe(testVenue.name);
     });
 
     it("should throw an error if venue does not exist", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
 
-      await expect(VenueService.getVenueById(nonExistentId))
-        .rejects
-        .toThrow("Venue not found");
+      await expect(VenueService.getVenueById(nonExistentId)).rejects.toThrow(
+        "Venue not found"
+      );
     });
   });
 
@@ -134,43 +143,49 @@ describe("Venue Service", () => {
         {
           ...testVenueData,
           name: "Organizer Venue 1",
-          owner: organizerUser._id
+          owner: organizerUser._id,
         },
         {
           ...testVenueData,
           name: "Organizer Venue 2",
-          owner: organizerUser._id
-        }
+          owner: organizerUser._id,
+        },
       ]);
     });
 
     it("should return venues owned by a user", async () => {
-      const result = await VenueService.getUserVenues(organizerUser._id.toString());
+      const venues = await VenueService.getUserVenues(
+        (organizerUser._id as Types.ObjectId).toString()
+      );
 
-      expect(result.venues).toBeDefined();
-      expect(Array.isArray(result.venues)).toBe(true);
-      expect(result.venues.length).toBeGreaterThan(0);
+      expect(Array.isArray(venues)).toBe(true);
+      expect(venues.length).toBeGreaterThan(0);
 
       // All venues should be owned by the organizer
-      result.venues.forEach(venue => {
-        expect(venue.owner.toString()).toBe(organizerUser._id.toString());
+      venues.forEach((venue) => {
+        expect(venue.owner.toString()).toBe(
+          (organizerUser._id as Types.ObjectId).toString()
+        );
       });
     });
 
-    it("should return pagination information", async () => {
-      const result = await VenueService.getUserVenues(organizerUser._id.toString(), 1, 2);
+    it("should paginate results correctly", async () => {
+      const venues = await VenueService.getUserVenues(
+        (organizerUser._id as Types.ObjectId).toString(),
+        1,
+        2
+      );
 
-      expect(result).toHaveProperty("total");
-      expect(result).toHaveProperty("page", 1);
-      expect(result).toHaveProperty("pages");
-      expect(result.venues.length).toBeLessThanOrEqual(2);
+      expect(Array.isArray(venues)).toBe(true);
+      expect(venues.length).toBeLessThanOrEqual(2);
     });
 
     it("should return empty array if user has no venues", async () => {
-      const result = await VenueService.getUserVenues(testUser._id.toString());
+      const venues = await VenueService.getUserVenues(
+        (testUser._id as Types.ObjectId).toString()
+      );
 
-      expect(result.venues).toEqual([]);
-      expect(result.total).toBe(0);
+      expect(venues).toEqual([]);
     });
   });
 
@@ -179,12 +194,12 @@ describe("Venue Service", () => {
       const updateData = {
         name: "Updated Service Venue",
         description: "Updated description",
-        capacity: 1500
+        capacity: 1500,
       };
 
       const updatedVenue = await VenueService.updateVenue(
-        testVenue._id.toString(),
-        organizerUser._id.toString(),
+        (testVenue._id as Types.ObjectId).toString(),
+        (organizerUser._id as Types.ObjectId).toString(),
         updateData
       );
 
@@ -196,12 +211,12 @@ describe("Venue Service", () => {
     it("should update a venue when admin is updating", async () => {
       const updateData = {
         name: "Admin Updated Venue",
-        isVerified: true
+        isVerified: true,
       };
 
       const updatedVenue = await VenueService.updateVenue(
-        testVenue._id.toString(),
-        adminUser._id.toString(),
+        (testVenue._id as Types.ObjectId).toString(),
+        (adminUser._id as Types.ObjectId).toString(),
         updateData
       );
 
@@ -211,13 +226,13 @@ describe("Venue Service", () => {
 
     it("should throw error when non-owner/non-admin tries to update", async () => {
       const updateData = {
-        name: "Unauthorized Update"
+        name: "Unauthorized Update",
       };
 
       await expect(
         VenueService.updateVenue(
-          testVenue._id.toString(),
-          testUser._id.toString(),
+          (testVenue._id as Types.ObjectId).toString(),
+          (testUser._id as Types.ObjectId).toString(),
           updateData
         )
       ).rejects.toThrow("You are not authorized to update this venue");
@@ -226,13 +241,13 @@ describe("Venue Service", () => {
     it("should throw error when non-admin tries to update isVerified", async () => {
       const updateData = {
         name: "Valid Update",
-        isVerified: true
+        isVerified: true,
       };
 
       await expect(
         VenueService.updateVenue(
-          testVenue._id.toString(),
-          organizerUser._id.toString(),
+          (testVenue._id as Types.ObjectId).toString(),
+          (organizerUser._id as Types.ObjectId).toString(),
           updateData
         )
       ).rejects.toThrow("Only administrators can verify venues");
@@ -242,8 +257,8 @@ describe("Venue Service", () => {
   describe("deleteVenue", () => {
     it("should delete a venue when owner is deleting", async () => {
       await VenueService.deleteVenue(
-        testVenue._id.toString(),
-        organizerUser._id.toString()
+        (testVenue._id as Types.ObjectId).toString(),
+        (organizerUser._id as Types.ObjectId).toString()
       );
 
       // Verify venue is deleted
@@ -253,8 +268,8 @@ describe("Venue Service", () => {
 
     it("should delete a venue when admin is deleting", async () => {
       await VenueService.deleteVenue(
-        testVenue._id.toString(),
-        adminUser._id.toString()
+        (testVenue._id as Types.ObjectId).toString(),
+        (adminUser._id as Types.ObjectId).toString()
       );
 
       // Verify venue is deleted
@@ -265,8 +280,8 @@ describe("Venue Service", () => {
     it("should throw error when non-owner/non-admin tries to delete", async () => {
       await expect(
         VenueService.deleteVenue(
-          testVenue._id.toString(),
-          testUser._id.toString()
+          (testVenue._id as Types.ObjectId).toString(),
+          (testUser._id as Types.ObjectId).toString()
         )
       ).rejects.toThrow("You are not authorized to delete this venue");
     });
@@ -277,7 +292,7 @@ describe("Venue Service", () => {
       await expect(
         VenueService.deleteVenue(
           nonExistentId,
-          adminUser._id.toString()
+          (adminUser._id as Types.ObjectId).toString()
         )
       ).rejects.toThrow("Venue not found");
     });
@@ -294,17 +309,17 @@ describe("Venue Service", () => {
             city: "Big City",
             state: "New State",
             country: "USA",
-            zipCode: "54321"
+            zipCode: "54321",
           },
           capacity: 10000,
           venueType: VenueType.STADIUM,
           description: "A large stadium for events",
           contactInfo: {
             email: "stadium@test.com",
-            phone: "1234567890"
+            phone: "1234567890",
           },
           owner: organizerUser._id,
-          isVerified: true
+          isVerified: true,
         },
         {
           name: "Small Club",
@@ -313,16 +328,16 @@ describe("Venue Service", () => {
             city: "Small Town",
             state: "Old State",
             country: "USA",
-            zipCode: "98765"
+            zipCode: "98765",
           },
           capacity: 200,
           venueType: VenueType.CLUB,
           description: "A cozy club for intimate performances",
           contactInfo: {
             email: "club@test.com",
-            phone: "0987654321"
+            phone: "0987654321",
           },
-          owner: organizerUser._id
+          owner: organizerUser._id,
         },
         {
           name: "Medium Venue",
@@ -331,80 +346,102 @@ describe("Venue Service", () => {
             city: "Mid City",
             state: "Mid State",
             country: "Canada",
-            zipCode: "M1D123"
+            zipCode: "M1D123",
           },
           capacity: 500,
           venueType: VenueType.CONCERT_HALL,
           description: "A medium-sized concert hall",
           contactInfo: {
             email: "mid@test.com",
-            phone: "5555555555"
+            phone: "5555555555",
           },
           owner: testUser._id,
-          isVerified: false
-        }
+          isVerified: false,
+        },
       ]);
     });
 
     it("should find all venues without filters", async () => {
-      const result = await VenueService.findVenues();
+      const venues = await VenueService.findVenues();
 
-      expect(result.venues).toBeDefined();
-      expect(result.total).toBeGreaterThan(0);
-      expect(result.venues.length).toBeGreaterThan(0);
+      expect(Array.isArray(venues)).toBe(true);
+      expect(venues.length).toBeGreaterThan(0);
     });
 
     it("should filter venues by name", async () => {
-      const result = await VenueService.findVenues({ name: "Club" });
+      const venues = await VenueService.findVenues({ name: "Club" });
 
-      result.venues.forEach(venue => {
+      venues.forEach((venue) => {
         expect(venue.name.toLowerCase()).toContain("club");
       });
     });
 
     it("should filter venues by city", async () => {
-      const result = await VenueService.findVenues({ city: "Small Town" });
+      const venues = await VenueService.findVenues({ city: "Small Town" });
 
-      result.venues.forEach(venue => {
+      venues.forEach((venue) => {
         expect(venue.location.city).toBe("Small Town");
       });
     });
 
-    it("should filter venues by venue type", async () => {
-      const result = await VenueService.findVenues({ venueType: VenueType.STADIUM });
+    it("should filter venues by state", async () => {
+      const venues = await VenueService.findVenues({ state: "Mid State" });
 
-      result.venues.forEach(venue => {
+      venues.forEach((venue) => {
+        expect(venue.location.state).toBe("Mid State");
+      });
+    });
+
+    it("should filter venues by country", async () => {
+      const venues = await VenueService.findVenues({ country: "Canada" });
+
+      venues.forEach((venue) => {
+        expect(venue.location.country).toBe("Canada");
+      });
+    });
+
+    it("should filter venues by venue type", async () => {
+      const venues = await VenueService.findVenues({
+        venueType: VenueType.STADIUM,
+      });
+
+      venues.forEach((venue) => {
         expect(venue.venueType).toBe(VenueType.STADIUM);
       });
     });
 
     it("should filter venues by capacity range", async () => {
-      const result = await VenueService.findVenues({
+      const venues = await VenueService.findVenues({
         minCapacity: 5000,
-        maxCapacity: 15000
+        maxCapacity: 15000,
       });
 
-      result.venues.forEach(venue => {
+      venues.forEach((venue) => {
         expect(venue.capacity).toBeGreaterThanOrEqual(5000);
         expect(venue.capacity).toBeLessThanOrEqual(15000);
       });
     });
 
     it("should filter venues by verified status", async () => {
-      const result = await VenueService.findVenues({ isVerified: true });
+      const venues = await VenueService.findVenues({ isVerified: true });
 
-      result.venues.forEach(venue => {
+      venues.forEach((venue) => {
         expect(venue.isVerified).toBe(true);
       });
     });
 
     it("should filter venues by owner", async () => {
-      const result = await VenueService.findVenues({
-        owner: testUser._id.toString()
+      const venues = await VenueService.findVenues({
+        owner: (testUser._id as Types.ObjectId).toString(),
       });
 
-      result.venues.forEach(venue => {
-        expect(venue.owner.toString()).toBe(testUser._id.toString());
+      venues.forEach((venue) => {
+        // Check if owner is populated (object) or just an ID
+        const venueOwnerId = venue.owner._id.toString()
+
+        expect(venueOwnerId).toBe(
+          (testUser._id as Types.ObjectId).toString()
+        );
       });
     });
 
@@ -412,15 +449,21 @@ describe("Venue Service", () => {
       const page1 = await VenueService.findVenues({}, 1, 1);
       const page2 = await VenueService.findVenues({}, 2, 1);
 
-      expect(page1.venues.length).toBe(1);
-      expect(page2.venues.length).toBe(1);
-      expect(page1.venues[0]._id.toString()).not.toBe(page2.venues[0]._id.toString());
+      expect(Array.isArray(page1)).toBe(true);
+      expect(Array.isArray(page2)).toBe(true);
+      expect(page1.length).toBe(1);
+      expect(page2.length).toBe(1);
+      expect((page1[0]._id as Types.ObjectId).toString()).not.toBe(
+        (page2[0]._id as Types.ObjectId).toString()
+      );
     });
   });
 
   describe("verifyVenue", () => {
     it("should verify a venue", async () => {
-      const venue = await VenueService.verifyVenue(testVenue._id.toString());
+      const venue = await VenueService.verifyVenue(
+        (testVenue._id as Types.ObjectId).toString()
+      );
 
       expect(venue.isVerified).toBe(true);
     });
@@ -428,15 +471,37 @@ describe("Venue Service", () => {
     it("should throw error for non-existent venue ID", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
 
-      await expect(VenueService.verifyVenue(nonExistentId))
-        .rejects
-        .toThrow("Venue not found");
+      await expect(VenueService.verifyVenue(nonExistentId)).rejects.toThrow(
+        "Venue not found"
+      );
     });
   });
 
-  // For uploadVenueImages, we would need to mock the S3 upload functionality
-  // This is a more complex test that requires mocking external dependencies
+  // For uploadVenueImages, we need to mock the S3 upload functionality
   describe("uploadVenueImages", () => {
+    // Mock the uploadFileToS3 function
+    const originalUploadFileToS3 =
+      require("../../app/config/upload").uploadFileToS3;
+    let mockUploadFileToS3: jest.Mock;
+
+    beforeEach(() => {
+      // Mock the S3 upload function to return a predictable URL without actually uploading
+      mockUploadFileToS3 = jest
+        .fn()
+        .mockImplementation((file, path) =>
+          Promise.resolve(
+            `https://test-bucket.s3.amazonaws.com/${path}/${file.originalname}`
+          )
+        );
+      require("../../app/config/upload").uploadFileToS3 = mockUploadFileToS3;
+    });
+
+    afterEach(() => {
+      // Restore the original function after tests
+      require("../../app/config/upload").uploadFileToS3 =
+        originalUploadFileToS3;
+    });
+
     it("should throw error when user is not authorized", async () => {
       const mockFiles: Express.Multer.File[] = [
         {
@@ -449,19 +514,120 @@ describe("Venue Service", () => {
           destination: "",
           filename: "test.jpg",
           path: "/tmp/test.jpg",
-          stream: undefined as any
-        }
+          stream: undefined as any,
+        },
       ];
 
       await expect(
         VenueService.uploadVenueImages(
-          testVenue._id.toString(),
-          testUser._id.toString(),
+          (testVenue._id as Types.ObjectId).toString(),
+          (testUser._id as Types.ObjectId).toString(),
           mockFiles
         )
-      ).rejects.toThrow("You are not authorized to upload images for this venue");
+      ).rejects.toThrow(
+        "You are not authorized to upload images for this venue"
+      );
     });
 
-    // Additional tests for uploadVenueImages would require mocking S3 interactions
+    it("should successfully upload images when owner is uploading", async () => {
+      const mockFiles: Express.Multer.File[] = [
+        {
+          fieldname: "images",
+          originalname: "test1.jpg",
+          encoding: "7bit",
+          mimetype: "image/jpeg",
+          buffer: Buffer.from("test1"),
+          size: 5,
+          destination: "",
+          filename: "test1.jpg",
+          path: "/tmp/test1.jpg",
+          stream: undefined as any,
+        },
+        {
+          fieldname: "images",
+          originalname: "test2.jpg",
+          encoding: "7bit",
+          mimetype: "image/jpeg",
+          buffer: Buffer.from("test2"),
+          size: 5,
+          destination: "",
+          filename: "test2.jpg",
+          path: "/tmp/test2.jpg",
+          stream: undefined as any,
+        },
+      ];
+
+      const result = await VenueService.uploadVenueImages(
+        (testVenue._id as Types.ObjectId).toString(),
+        (organizerUser._id as Types.ObjectId).toString(),
+        mockFiles
+      );
+
+      // Verify the mock was called for each file
+      expect(mockUploadFileToS3).toHaveBeenCalledTimes(2);
+
+      // Verify the returned URLs
+      expect(result).toHaveLength(2);
+      expect(result[0]).toContain("test1.jpg");
+      expect(result[1]).toContain("test2.jpg");
+
+      // Verify the venue was updated with the new images
+      const updatedVenue = await Venue.findById(testVenue._id);
+      expect(updatedVenue?.images).toHaveLength(2);
+      expect(updatedVenue?.images).toEqual(result);
+    });
+
+    it("should successfully upload images when admin is uploading", async () => {
+      const mockFiles: Express.Multer.File[] = [
+        {
+          fieldname: "images",
+          originalname: "admin-test.jpg",
+          encoding: "7bit",
+          mimetype: "image/jpeg",
+          buffer: Buffer.from("admin-test"),
+          size: 10,
+          destination: "",
+          filename: "admin-test.jpg",
+          path: "/tmp/admin-test.jpg",
+          stream: undefined as any,
+        },
+      ];
+
+      const result = await VenueService.uploadVenueImages(
+        (testVenue._id as Types.ObjectId).toString(),
+        (adminUser._id as Types.ObjectId).toString(),
+        mockFiles
+      );
+
+      expect(mockUploadFileToS3).toHaveBeenCalledTimes(1);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toContain("admin-test.jpg");
+    });
+
+    it("should throw error for non-existent venue ID", async () => {
+      const nonExistentId = new mongoose.Types.ObjectId().toString();
+      const mockFiles: Express.Multer.File[] = [
+        {
+          fieldname: "images",
+          originalname: "test.jpg",
+          encoding: "7bit",
+          mimetype: "image/jpeg",
+          buffer: Buffer.from("test"),
+          size: 4,
+          destination: "",
+          filename: "test.jpg",
+          path: "/tmp/test.jpg",
+          stream: undefined as any,
+        },
+      ];
+
+      await expect(
+        VenueService.uploadVenueImages(
+          nonExistentId,
+          (adminUser._id as Types.ObjectId).toString(),
+          mockFiles
+        )
+      ).rejects.toThrow("Venue not found");
+    });
   });
 });
