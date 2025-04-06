@@ -7,7 +7,8 @@ import Event from "../models/Event";
 import Artist from "../models/Artist";
 import { AppError } from "../middleware/errorHandler";
 import { CreateBookingInput } from "../interfaces/booking.interface";
-import { IUser } from "../models/User";
+import User, { IUser } from "../models/User";
+import { ObjectId } from "mongoose";
 
 export class BookingService {
   /**
@@ -104,7 +105,7 @@ export class BookingService {
   /**
    * Update booking status
    * @param bookingId - Booking ID
-   * @param userId - User ID making the update (for authorization)
+   * @param user - User object making the update (for authorization)
    * @param status - New booking status
    */
   async updateBookingStatus(
@@ -114,17 +115,40 @@ export class BookingService {
   ): Promise<IBooking> {
     const booking = await this.getBookingById(bookingId);
 
-    // Check authorization: only the artist or the organizer can update booking status
-    const artist = await Artist.findById(booking.artist);
-    if (!artist) {
-      throw new AppError("Artist profile not found", 404);
+    // Check authorization based on user role and booking status
+    const isAdmin = user.role === "admin";
+    const isOrganizer = booking.bookedBy.toString() === (user._id as ObjectId).toString() || user.role === "organizer";
+
+    // Get artist details if user is an artist
+    let isBookingArtist = false;
+    if (user.role === "artist") {
+      const artist = await Artist.findOne({ user: user._id });
+      if (artist && (artist._id as ObjectId).toString() === booking.artist._id.toString()) {
+        isBookingArtist = true;
+      }
     }
 
-    if (
-      artist.user.toString() !== user._id &&
-      booking.bookedBy.toString() !== user._id &&
-      user.role !== "admin"
-    ) {
+    // Authorization rules based on action and role
+    let authorized = false;
+
+    if (isAdmin) {
+      // Admin can update any booking
+      authorized = true;
+    } else if (status === BookingStatus.CONFIRMED || status === BookingStatus.REJECTED) {
+      // Only artist associated with booking or admin can confirm/reject
+      authorized = isBookingArtist || isAdmin;
+    } else if (status === BookingStatus.COMPLETED) {
+      // Only organizer who created booking or admin can mark as complete
+      authorized = isOrganizer || isAdmin;
+    } else if (status === BookingStatus.CANCELED) {
+      // Both artist and organizer can cancel
+      authorized = isOrganizer || isBookingArtist || isAdmin;
+    } else {
+      // For other status updates, both relevant artist and organizer are authorized
+      authorized = isOrganizer || isBookingArtist || isAdmin;
+    }
+
+    if (!authorized) {
       throw new AppError("You are not authorized to update this booking", 403);
     }
 
@@ -160,8 +184,17 @@ export class BookingService {
   ): Promise<IBooking> {
     const booking = await this.getBookingById(bookingId);
 
-    // Check authorization: only the booker can update payment status
-    if (booking.bookedBy.toString() !== userId) {
+    // Check authorization: organizer who created the booking or admin can update payment status
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    const isAdmin = user.role === "admin";
+    const isBooker = booking.bookedBy.toString() === userId;
+    const isOrganizer = user.role === "organizer";
+
+    if (!isAdmin && !isBooker && !isOrganizer) {
       throw new AppError("You are not authorized to update this payment", 403);
     }
 

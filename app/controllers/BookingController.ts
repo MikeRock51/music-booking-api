@@ -180,11 +180,11 @@ class BookingController {
   async confirmBooking(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const userId = req.user._id;
+      const user = req.user;
 
       const booking = await this.bookingService.updateBookingStatus(
         id,
-        userId,
+        user,
         BookingStatus.CONFIRMED
       );
 
@@ -204,11 +204,11 @@ class BookingController {
   async rejectBooking(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const userId = req.user._id;
+      const user = req.user;
 
       const booking = await this.bookingService.updateBookingStatus(
         id,
-        userId,
+        user,
         BookingStatus.REJECTED
       );
 
@@ -228,11 +228,11 @@ class BookingController {
   async cancelBooking(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const userId = req.user._id;
+      const user = req.user;
 
       const booking = await this.bookingService.updateBookingStatus(
         id,
-        userId,
+        user,
         BookingStatus.CANCELED
       );
 
@@ -252,11 +252,11 @@ class BookingController {
   async completeBooking(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const userId = req.user._id;
+      const user = req.user;
 
       const booking = await this.bookingService.updateBookingStatus(
         id,
-        userId,
+        user,
         BookingStatus.COMPLETED
       );
 
