@@ -49,8 +49,8 @@ describe("Venue Controller", () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany({});
-    await Venue.deleteMany({});
+    await User.deleteMany({ email: /@venuecontrollertest.com/ });
+    await Venue.deleteMany({ owner: { $in: [ adminUser._id, organizerUser._id ] } });
     await closeDatabase();
   });
 
@@ -88,7 +88,7 @@ describe("Venue Controller", () => {
 
   afterEach(async () => {
     await User.deleteMany({ email: /@venuecontrollertest.com/ });
-    await Venue.deleteMany({});
+    await Venue.deleteMany({ owner: { $in: [ adminUser._id, organizerUser._id ] } });
   });
 
   describe("POST /venues", () => {
