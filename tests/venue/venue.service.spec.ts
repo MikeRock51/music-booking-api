@@ -7,6 +7,7 @@ import { AppError } from "../../app/middleware/errorHandler";
 import { createTestUser } from "../helpers";
 
 describe("Venue Service", () => {
+  let venueService: VenueService;
   let testUser: any;
   let organizerUser: any;
   let adminUser: any;
@@ -69,6 +70,9 @@ describe("Venue Service", () => {
   });
 
   beforeEach(async () => {
+    // Create a new VenueService instance for each test
+    venueService = new VenueService();
+
     // Create test users with different roles
     testUser = await createTestUser(testUserData);
 
@@ -99,7 +103,7 @@ describe("Venue Service", () => {
         organizerUser = await createTestUser(organizerUserData);
       } catch (error) {}
 
-      const venue = await VenueService.createVenue(
+      const venue = await venueService.createVenue(
         (organizerUser._id as Types.ObjectId).toString(),
         venueData
       );
@@ -116,14 +120,14 @@ describe("Venue Service", () => {
       const nonExistentUserId = new mongoose.Types.ObjectId().toString();
 
       await expect(
-        VenueService.createVenue(nonExistentUserId, testVenueData)
+        venueService.createVenue(nonExistentUserId, testVenueData)
       ).rejects.toThrow("User not found");
     });
   });
 
   describe("getVenueById", () => {
     it("should retrieve a venue by ID", async () => {
-      const venue = await VenueService.getVenueById(
+      const venue = await venueService.getVenueById(
         (testVenue._id as Types.ObjectId).toString()
       );
 
@@ -137,7 +141,7 @@ describe("Venue Service", () => {
     it("should throw an error if venue does not exist", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
 
-      await expect(VenueService.getVenueById(nonExistentId)).rejects.toThrow(
+      await expect(venueService.getVenueById(nonExistentId)).rejects.toThrow(
         "Venue not found"
       );
     });
@@ -161,7 +165,7 @@ describe("Venue Service", () => {
     });
 
     it("should return venues owned by a user", async () => {
-      const venues = await VenueService.getUserVenues(
+      const venues = await venueService.getUserVenues(
         (organizerUser._id as Types.ObjectId).toString()
       );
 
@@ -177,7 +181,7 @@ describe("Venue Service", () => {
     });
 
     it("should paginate results correctly", async () => {
-      const venues = await VenueService.getUserVenues(
+      const venues = await venueService.getUserVenues(
         (organizerUser._id as Types.ObjectId).toString(),
         1,
         2
@@ -188,7 +192,7 @@ describe("Venue Service", () => {
     });
 
     it("should return empty array if user has no venues", async () => {
-      const venues = await VenueService.getUserVenues(
+      const venues = await venueService.getUserVenues(
         (testUser._id as Types.ObjectId).toString()
       );
 
@@ -197,36 +201,6 @@ describe("Venue Service", () => {
   });
 
   describe("updateVenue", () => {
-    beforeEach(async () => {
-      try {
-        // Create a new venue for the organizer
-        organizerUser = await createTestUser({
-          ...testUserData,
-          email: `organizer${Date.now()}@eventcontrollertest.com`,
-          role: UserRole.ORGANIZER,
-        });
-      } catch (error) {}
-      try {
-        testVenue = await Venue.create({
-          ...testVenueData,
-          name: "Test Venue for Update",
-          owner: organizerUser._id,
-        });
-      } catch (error: any) {
-        console.log(
-          error.message,
-          "VENUE ERROR~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        );
-      }
-      try {
-        adminUser = await createTestUser(adminUserData);
-      } catch (error) {}
-
-      try {
-        testUser = await createTestUser(testUserData);
-      } catch (error) {}
-    });
-
     it("should update a venue when owner is updating", async () => {
       const updateData = {
         name: "Updated Service Venue",
@@ -234,7 +208,7 @@ describe("Venue Service", () => {
         capacity: 1500,
       };
 
-      const updatedVenue = await VenueService.updateVenue(
+      const updatedVenue = await venueService.updateVenue(
         (testVenue._id as Types.ObjectId).toString(),
         (organizerUser._id as Types.ObjectId).toString(),
         updateData
@@ -251,7 +225,7 @@ describe("Venue Service", () => {
         isVerified: true,
       };
 
-      const updatedVenue = await VenueService.updateVenue(
+      const updatedVenue = await venueService.updateVenue(
         (testVenue._id as Types.ObjectId).toString(),
         (adminUser._id as Types.ObjectId).toString(),
         updateData
@@ -267,7 +241,7 @@ describe("Venue Service", () => {
       };
 
       await expect(
-        VenueService.updateVenue(
+        venueService.updateVenue(
           (testVenue._id as Types.ObjectId).toString(),
           (testUser._id as Types.ObjectId).toString(),
           updateData
@@ -282,7 +256,7 @@ describe("Venue Service", () => {
       };
 
       await expect(
-        VenueService.updateVenue(
+        venueService.updateVenue(
           (testVenue._id as Types.ObjectId).toString(),
           (organizerUser._id as Types.ObjectId).toString(),
           updateData
@@ -292,29 +266,8 @@ describe("Venue Service", () => {
   });
 
   describe("deleteVenue", () => {
-    beforeEach(async () => {
-      try {
-        // Create a new venue for the organizer
-        organizerUser = await createTestUser({
-          ...testUserData,
-          email: `organizer${Date.now()}@eventcontrollertest.com`,
-          role: UserRole.ORGANIZER,
-        });
-
-        // Create a test venue
-        testVenue = await Venue.create({
-          ...testVenueData,
-          name: "Test Venue for Deletion",
-          owner: organizerUser._id,
-        });
-
-        testUser = await createTestUser(testUserData);
-        adminUser = await createTestUser(adminUserData);
-      } catch (error) {}
-    });
-
     it("should delete a venue when owner is deleting", async () => {
-      await VenueService.deleteVenue(
+      await venueService.deleteVenue(
         (testVenue._id as Types.ObjectId).toString(),
         (organizerUser._id as Types.ObjectId).toString()
       );
@@ -325,7 +278,7 @@ describe("Venue Service", () => {
     });
 
     it("should delete a venue when admin is deleting", async () => {
-      await VenueService.deleteVenue(
+      await venueService.deleteVenue(
         (testVenue._id as Types.ObjectId).toString(),
         (adminUser._id as Types.ObjectId).toString()
       );
@@ -337,7 +290,7 @@ describe("Venue Service", () => {
 
     it("should throw error when non-owner/non-admin tries to delete", async () => {
       await expect(
-        VenueService.deleteVenue(
+        venueService.deleteVenue(
           (testVenue._id as Types.ObjectId).toString(),
           (testUser._id as Types.ObjectId).toString()
         )
@@ -348,7 +301,7 @@ describe("Venue Service", () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
 
       await expect(
-        VenueService.deleteVenue(
+        venueService.deleteVenue(
           nonExistentId,
           (adminUser._id as Types.ObjectId).toString()
         )
@@ -420,14 +373,14 @@ describe("Venue Service", () => {
     });
 
     it("should find all venues without filters", async () => {
-      const venues = await VenueService.findVenues();
+      const venues = await venueService.findVenues();
 
       expect(Array.isArray(venues)).toBe(true);
       expect(venues.length).toBeGreaterThan(0);
     });
 
     it("should filter venues by name", async () => {
-      const venues = await VenueService.findVenues({ name: "Club" });
+      const venues = await venueService.findVenues({ name: "Club" });
 
       venues.forEach((venue) => {
         expect(venue.name.toLowerCase()).toContain("club");
@@ -435,7 +388,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by city", async () => {
-      const venues = await VenueService.findVenues({ city: "Small Town" });
+      const venues = await venueService.findVenues({ city: "Small Town" });
 
       venues.forEach((venue) => {
         expect(venue.location.city).toBe("Small Town");
@@ -443,7 +396,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by state", async () => {
-      const venues = await VenueService.findVenues({ state: "Mid State" });
+      const venues = await venueService.findVenues({ state: "Mid State" });
 
       venues.forEach((venue) => {
         expect(venue.location.state).toBe("Mid State");
@@ -451,7 +404,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by country", async () => {
-      const venues = await VenueService.findVenues({ country: "Canada" });
+      const venues = await venueService.findVenues({ country: "Canada" });
 
       venues.forEach((venue) => {
         expect(venue.location.country).toBe("Canada");
@@ -459,7 +412,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by venue type", async () => {
-      const venues = await VenueService.findVenues({
+      const venues = await venueService.findVenues({
         venueType: VenueType.STADIUM,
       });
 
@@ -469,7 +422,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by capacity range", async () => {
-      const venues = await VenueService.findVenues({
+      const venues = await venueService.findVenues({
         minCapacity: 5000,
         maxCapacity: 15000,
       });
@@ -481,7 +434,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by verified status", async () => {
-      const venues = await VenueService.findVenues({ isVerified: true });
+      const venues = await venueService.findVenues({ isVerified: true });
 
       venues.forEach((venue) => {
         expect(venue.isVerified).toBe(true);
@@ -489,7 +442,7 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by owner", async () => {
-      const venues = await VenueService.findVenues({
+      const venues = await venueService.findVenues({
         owner: (testUser._id as Types.ObjectId).toString(),
       });
 
@@ -502,8 +455,8 @@ describe("Venue Service", () => {
     });
 
     it("should handle pagination", async () => {
-      const page1 = await VenueService.findVenues({}, 1, 1);
-      const page2 = await VenueService.findVenues({}, 2, 1);
+      const page1 = await venueService.findVenues({}, 1, 1);
+      const page2 = await venueService.findVenues({}, 2, 1);
 
       expect(Array.isArray(page1)).toBe(true);
       expect(Array.isArray(page2)).toBe(true);
@@ -517,7 +470,7 @@ describe("Venue Service", () => {
 
   describe("verifyVenue", () => {
     it("should verify a venue", async () => {
-      const venue = await VenueService.verifyVenue(
+      const venue = await venueService.verifyVenue(
         (testVenue._id as Types.ObjectId).toString()
       );
 
@@ -527,7 +480,7 @@ describe("Venue Service", () => {
     it("should throw error for non-existent venue ID", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
 
-      await expect(VenueService.verifyVenue(nonExistentId)).rejects.toThrow(
+      await expect(venueService.verifyVenue(nonExistentId)).rejects.toThrow(
         "Venue not found"
       );
     });
