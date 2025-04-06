@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import BookingService from '../services/BookingService';
-import ArtistService from '../services/ArtistService';
-import { BookingStatus } from '../models/Booking';
-import { CreateBookingInput } from '../interfaces/booking.interface';
-import { ObjectId } from 'mongoose';
+import { Request, Response, NextFunction } from "express";
+import BookingService from "../services/BookingService";
+import ArtistService from "../services/ArtistService";
+import { BookingStatus } from "../models/Booking";
+import { CreateBookingInput } from "../interfaces/booking.interface";
+import { ObjectId } from "mongoose";
 
 class BookingController {
   private bookingService: BookingService;
@@ -22,12 +22,15 @@ class BookingController {
       const userId = req.user._id;
       const bookingData: CreateBookingInput = req.body;
 
-      const booking = await this.bookingService.createBooking(userId, bookingData);
+      const booking = await this.bookingService.createBooking(
+        userId,
+        bookingData
+      );
 
       res.status(201).json({
         success: true,
-        message: 'Booking created successfully',
-        data: booking
+        message: "Booking created successfully",
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -45,7 +48,7 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: booking
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -58,15 +61,19 @@ class BookingController {
   async updateBookingStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const userId = req.user._id;
+      const user = req.user;
       const { status } = req.body;
 
-      const booking = await this.bookingService.updateBookingStatus(id, userId, status);
+      const booking = await this.bookingService.updateBookingStatus(
+        id,
+        user,
+        status
+      );
 
       res.status(200).json({
         success: true,
         message: `Booking status updated to ${status}`,
-        data: booking
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -82,12 +89,16 @@ class BookingController {
       const userId = req.user._id;
       const paymentData = req.body;
 
-      const booking = await this.bookingService.updatePaymentStatus(id, userId, paymentData);
+      const booking = await this.bookingService.updatePaymentStatus(
+        id,
+        userId,
+        paymentData
+      );
 
       res.status(200).json({
         success: true,
         message: `Payment status updated to ${paymentData.status}`,
-        data: booking
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -110,7 +121,7 @@ class BookingController {
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
 
-      const result = await this.bookingService.getArtistBookings(
+      const bookings = await this.bookingService.getArtistBookings(
         (artist._id as ObjectId).toString(),
         filters,
         Number(page),
@@ -119,12 +130,7 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: result.bookings,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: bookings,
       });
     } catch (error) {
       next(error);
@@ -137,7 +143,14 @@ class BookingController {
   async getOrganizerBookings(req: Request, res: Response, next: NextFunction) {
     try {
       const organizerId = req.user._id;
-      const { status, startDate, endDate, eventId, page = 1, limit = 10 } = req.query;
+      const {
+        status,
+        startDate,
+        endDate,
+        eventId,
+        page = 1,
+        limit = 10,
+      } = req.query;
 
       const filters: any = {};
       if (status) filters.status = status;
@@ -145,7 +158,7 @@ class BookingController {
       if (endDate) filters.endDate = endDate;
       if (eventId) filters.eventId = eventId;
 
-      const result = await this.bookingService.getOrganizerBookings(
+      const bookings = await this.bookingService.getOrganizerBookings(
         organizerId,
         filters,
         Number(page),
@@ -154,12 +167,7 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: result.bookings,
-        pagination: {
-          total: result.total,
-          page: result.page,
-          pages: result.pages
-        }
+        data: bookings,
       });
     } catch (error) {
       next(error);
@@ -174,12 +182,16 @@ class BookingController {
       const { id } = req.params;
       const userId = req.user._id;
 
-      const booking = await this.bookingService.updateBookingStatus(id, userId, BookingStatus.CONFIRMED);
+      const booking = await this.bookingService.updateBookingStatus(
+        id,
+        userId,
+        BookingStatus.CONFIRMED
+      );
 
       res.status(200).json({
         success: true,
-        message: 'Booking confirmed successfully',
-        data: booking
+        message: "Booking confirmed successfully",
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -194,12 +206,16 @@ class BookingController {
       const { id } = req.params;
       const userId = req.user._id;
 
-      const booking = await this.bookingService.updateBookingStatus(id, userId, BookingStatus.REJECTED);
+      const booking = await this.bookingService.updateBookingStatus(
+        id,
+        userId,
+        BookingStatus.REJECTED
+      );
 
       res.status(200).json({
         success: true,
-        message: 'Booking rejected',
-        data: booking
+        message: "Booking rejected",
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -214,12 +230,16 @@ class BookingController {
       const { id } = req.params;
       const userId = req.user._id;
 
-      const booking = await this.bookingService.updateBookingStatus(id, userId, BookingStatus.CANCELED);
+      const booking = await this.bookingService.updateBookingStatus(
+        id,
+        userId,
+        BookingStatus.CANCELED
+      );
 
       res.status(200).json({
         success: true,
-        message: 'Booking canceled successfully',
-        data: booking
+        message: "Booking canceled successfully",
+        data: booking,
       });
     } catch (error) {
       next(error);
@@ -234,12 +254,16 @@ class BookingController {
       const { id } = req.params;
       const userId = req.user._id;
 
-      const booking = await this.bookingService.updateBookingStatus(id, userId, BookingStatus.COMPLETED);
+      const booking = await this.bookingService.updateBookingStatus(
+        id,
+        userId,
+        BookingStatus.COMPLETED
+      );
 
       res.status(200).json({
         success: true,
-        message: 'Booking marked as completed',
-        data: booking
+        message: "Booking marked as completed",
+        data: booking,
       });
     } catch (error) {
       next(error);
