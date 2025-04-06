@@ -7,6 +7,7 @@ import { ArtistProfileInput } from "../../app/interfaces/artist.interface";
 import { createTestUser } from "../helpers";
 
 describe("ArtistService", () => {
+  let artistService: ArtistService;
   let userId: string;
   let testUser: any;
   const testUserData = {
@@ -29,6 +30,7 @@ describe("ArtistService", () => {
 
   beforeEach(async () => {
     // Create a test user for each test
+    artistService = new ArtistService(); // Create a new instance for each test
     testUser = await createTestUser(testUserData);
     userId = testUser._id.toString();
   });
@@ -62,7 +64,7 @@ describe("ArtistService", () => {
         userId = testUser._id.toString();
       } catch (error) {}
 
-      const result = await ArtistService.createArtistProfile(
+      const result = await artistService.createArtistProfile(
         userId,
         artistData
       );
@@ -80,7 +82,6 @@ describe("ArtistService", () => {
       // Verify user role was updated
       try {
         const updatedUser = await User.findById(userId);
-        // console.log(updatedUser?.role);
         expect(updatedUser).toHaveProperty("role", UserRole.ARTIST);
       } catch (error) {
         console.error("Error fetching updated user:", error);
@@ -102,7 +103,7 @@ describe("ArtistService", () => {
       };
 
       await expect(
-        ArtistService.createArtistProfile(nonExistentId, artistData)
+        artistService.createArtistProfile(nonExistentId, artistData)
       ).rejects.toThrow("User not found");
     });
 
@@ -125,11 +126,11 @@ describe("ArtistService", () => {
       } catch (error) {}
 
       // Create the first profile
-      await ArtistService.createArtistProfile(userId, artistData);
+      await artistService.createArtistProfile(userId, artistData);
 
       // Try to create a second profile for the same user
       await expect(
-        ArtistService.createArtistProfile(userId, artistData)
+        artistService.createArtistProfile(userId, artistData)
       ).rejects.toThrow("User already has an artist profile");
     });
   });
@@ -148,13 +149,13 @@ describe("ArtistService", () => {
         },
       };
 
-      const createdArtist = await ArtistService.createArtistProfile(
+      const createdArtist = await artistService.createArtistProfile(
         userId,
         artistData
       );
       const artistId = (createdArtist._id as ObjectId).toString();
 
-      const result = await ArtistService.getArtistById(artistId);
+      const result = await artistService.getArtistById(artistId);
 
       expect(result).toHaveProperty("_id");
       expect((result._id as ObjectId).toString()).toBe(artistId);
@@ -163,7 +164,7 @@ describe("ArtistService", () => {
 
     it("should throw error when getting non-existent artist", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
-      await expect(ArtistService.getArtistById(nonExistentId)).rejects.toThrow(
+      await expect(artistService.getArtistById(nonExistentId)).rejects.toThrow(
         "Artist not found"
       );
     });
@@ -183,9 +184,9 @@ describe("ArtistService", () => {
         },
       };
 
-      await ArtistService.createArtistProfile(userId, artistData);
+      await artistService.createArtistProfile(userId, artistData);
 
-      const result = await ArtistService.getArtistByUserId(userId);
+      const result = await artistService.getArtistByUserId(userId);
 
       expect(result).toHaveProperty("user");
       expect(result.user.toString()).toBe(userId);
@@ -201,7 +202,7 @@ describe("ArtistService", () => {
       });
 
       await expect(
-        ArtistService.getArtistByUserId((newUser._id as ObjectId).toString())
+        artistService.getArtistByUserId((newUser._id as ObjectId).toString())
       ).rejects.toThrow("Artist profile not found for this user");
     });
   });
@@ -221,7 +222,7 @@ describe("ArtistService", () => {
         },
       };
 
-      await ArtistService.createArtistProfile(userId, artistData);
+      await artistService.createArtistProfile(userId, artistData);
 
       // Update the profile
       const updateData = {
@@ -230,7 +231,7 @@ describe("ArtistService", () => {
         location: "Updated location",
       };
 
-      const result = await ArtistService.updateArtistProfile(
+      const result = await artistService.updateArtistProfile(
         userId,
         updateData
       );
@@ -249,7 +250,7 @@ describe("ArtistService", () => {
       };
 
       await expect(
-        ArtistService.updateArtistProfile(nonExistentId, updateData)
+        artistService.updateArtistProfile(nonExistentId, updateData)
       ).rejects.toThrow("Artist not found");
     });
   });
@@ -303,7 +304,7 @@ describe("ArtistService", () => {
     });
 
     it("should find artists with genre filter", async () => {
-      const result = await ArtistService.findArtists(
+      const result = await artistService.findArtists(
         { genres: [MusicGenre.ROCK] },
         1,
         10
@@ -315,7 +316,7 @@ describe("ArtistService", () => {
     });
 
     it("should find artists with location filter", async () => {
-      const result = await ArtistService.findArtists(
+      const result = await artistService.findArtists(
         { location: "Angeles" },
         1,
         10
@@ -330,7 +331,7 @@ describe("ArtistService", () => {
     });
 
     it("should find artists with rate filter", async () => {
-      const result = await ArtistService.findArtists(
+      const result = await artistService.findArtists(
         { minRate: 400, maxRate: 900 },
         1,
         10
@@ -343,7 +344,7 @@ describe("ArtistService", () => {
     });
 
     it("should find artists with min rating filter", async () => {
-      const result = await ArtistService.findArtists({ minRating: 4.5 }, 1, 10);
+      const result = await artistService.findArtists({ minRating: 4.5 }, 1, 10);
 
       expect(Array.isArray(result)).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
@@ -352,11 +353,11 @@ describe("ArtistService", () => {
 
     it("should implement pagination correctly", async () => {
       // First page with limit 1
-      const page1 = await ArtistService.findArtists({}, 1, 1);
+      const page1 = await artistService.findArtists({}, 1, 1);
       expect(page1.length).toBe(1);
 
       // Second page with limit 1
-      const page2 = await ArtistService.findArtists({}, 2, 1);
+      const page2 = await artistService.findArtists({}, 2, 1);
       expect(page2.length).toBe(1);
 
       // Ensure they're different artists
@@ -383,7 +384,7 @@ describe("ArtistService", () => {
   //       },
   //     };
 
-  //     const artist = await ArtistService.createArtistProfile(userId, artistData);
+  //     const artist = await artistService.createArtistProfile(userId, artistData);
   //     artistId = artist._id.toString();
 
   //     // Mock the uploadFileToS3 function
@@ -411,7 +412,7 @@ describe("ArtistService", () => {
   //       } as Express.Multer.File
   //     ];
 
-  //     const results = await ArtistService.uploadPortfolioImages(userId, mockFiles);
+  //     const results = await artistService.uploadPortfolioImages(userId, mockFiles);
 
   //     // Verify we got back the correct image URLs
   //     expect(Array.isArray(results)).toBe(true);
@@ -439,14 +440,14 @@ describe("ArtistService", () => {
   //     ];
 
   //     await expect(
-  //       ArtistService.uploadPortfolioImages(nonExistentId, mockFiles)
+  //       artistService.uploadPortfolioImages(nonExistentId, mockFiles)
   //     ).rejects.toThrow("Artist profile not found for this user");
   //   });
 
   //   it("should handle empty files array", async () => {
   //     const mockFiles: Express.Multer.File[] = [];
 
-  //     const results = await ArtistService.uploadPortfolioImages(userId, mockFiles);
+  //     const results = await artistService.uploadPortfolioImages(userId, mockFiles);
 
   //     expect(Array.isArray(results)).toBe(true);
   //     expect(results.length).toBe(0);
@@ -471,7 +472,7 @@ describe("ArtistService", () => {
   //       } as Express.Multer.File
   //     ];
 
-  //     const results = await ArtistService.uploadPortfolioImages(userId, mockFiles);
+  //     const results = await artistService.uploadPortfolioImages(userId, mockFiles);
 
   //     // Verify the result contains only the new image URL
   //     expect(results).toEqual(['https://example.com/images/new-image.jpg']);

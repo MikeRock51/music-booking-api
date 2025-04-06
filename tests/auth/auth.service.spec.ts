@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import { AppError } from '../../app/middleware/errorHandler';
 
 describe('AuthService', () => {
+  let authService: AuthService;
+
   beforeAll(async () => {
     await initializeDatabase();
     // Clean up any test users
@@ -18,6 +20,11 @@ describe('AuthService', () => {
     await User.deleteMany({ email: /@serviceexample.com/ });
     await Artist.deleteMany({ email: /@serviceexample.com/ });
     await closeDatabase();
+  });
+
+  beforeEach(() => {
+    // Create a new instance for each test
+    authService = new AuthService();
   });
 
   afterEach(async () => {
@@ -35,7 +42,7 @@ describe('AuthService', () => {
         lastName: 'Service'
       };
 
-      const result = await AuthService.register(userData);
+      const result = await authService.register(userData);
 
       // Check if the result has the expected properties
       expect(result).toHaveProperty('user');
@@ -62,10 +69,10 @@ describe('AuthService', () => {
         lastName: 'Duplicate'
       };
 
-      await AuthService.register(userData);
+      await authService.register(userData);
 
       // Try to register again with the same email
-      await expect(AuthService.register(userData)).rejects.toThrow('Email already in use');
+      await expect(authService.register(userData)).rejects.toThrow('Email already in use');
     });
 
     it('should allow custom role when registering', async () => {
@@ -77,7 +84,7 @@ describe('AuthService', () => {
         role: UserRole.ARTIST
       };
 
-      const result = await AuthService.register(userData);
+      const result = await authService.register(userData);
 
       expect(result.user).toHaveProperty('role', UserRole.ARTIST);
     });
@@ -86,7 +93,7 @@ describe('AuthService', () => {
   describe('login method', () => {
     beforeEach(async () => {
       // Create a test user for login tests
-      await AuthService.register({
+      await authService.register({
         email: 'testlogin@serviceexample.com',
         password: 'Password123!',
         firstName: 'Test',
@@ -100,7 +107,7 @@ describe('AuthService', () => {
         password: 'Password123!'
       };
 
-      const result = await AuthService.login(loginData);
+      const result = await authService.login(loginData);
 
       // Check if the result has the expected properties
       expect(result).toHaveProperty('user');
@@ -120,7 +127,7 @@ describe('AuthService', () => {
         password: 'WrongPassword123!'
       };
 
-      await expect(AuthService.login(loginData)).rejects.toThrow('Invalid email or password');
+      await expect(authService.login(loginData)).rejects.toThrow('Invalid email or password');
     });
 
     it('should throw error when logging in with non-existent email', async () => {
@@ -129,17 +136,16 @@ describe('AuthService', () => {
         password: 'Password123!'
       };
 
-      await expect(AuthService.login(loginData)).rejects.toThrow('Invalid email or password');
+      await expect(authService.login(loginData)).rejects.toThrow('Invalid email or password');
     });
   });
-
 
   describe('upgradeTo method', () => {
     let userId: string;
 
     beforeEach(async () => {
       // Create a test user for role upgrade
-      const result = await AuthService.register({
+      const result = await authService.register({
         email: 'testupgrade@serviceexample.com',
         password: 'Password123!',
         firstName: 'Test',
@@ -154,7 +160,7 @@ describe('AuthService', () => {
         role: UserRole.ADMIN
       };
 
-      const result = await AuthService.upgradeTo(upgradeData);
+      const result = await authService.upgradeTo(upgradeData);
 
       expect(result).toHaveProperty('role', UserRole.ADMIN);
       expect(result).toHaveProperty('_id');
@@ -172,7 +178,7 @@ describe('AuthService', () => {
         role: UserRole.ADMIN
       };
 
-      await expect(AuthService.upgradeTo(upgradeData))
+      await expect(authService.upgradeTo(upgradeData))
         .rejects.toThrow('User not found');
     });
   });
