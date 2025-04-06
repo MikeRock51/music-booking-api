@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "e379e7be-63b9-4c94-a91a-fcd5e1a8ab8b",
 		"name": "Music Booking API",
-		"description": "API collection for testing the Music Booking API endpoints",
+		"description": "API collection for testing the Music Booking API endpoints. All endpoints can be accessed both directly from the root path (/) or with the /v1 prefix.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "30168355",
 		"_collection_link": "https://www.postman.com/devs66-7432/workspace/mike-rock/collection/30168355-e379e7be-63b9-4c94-a91a-fcd5e1a8ab8b?action=share&source=collection_link&creator=30168355"
@@ -158,7 +158,7 @@
 					"response": []
 				}
 			],
-			"description": "Authentication-related endpoints"
+			"description": "Authentication-related endpoints. All endpoints are available with both / and /v1 prefixes."
 		},
 		{
 			"name": "Artists",
@@ -374,7 +374,7 @@
 					"response": []
 				}
 			],
-			"description": "Artist profile endpoints"
+			"description": "Artist profile endpoints. All endpoints are available with both / and /v1 prefixes."
 		},
 		{
 			"name": "Events",
@@ -588,7 +588,7 @@
 					"response": []
 				}
 			],
-			"description": "Event management endpoints"
+			"description": "Event management endpoints. All endpoints are available with both / and /v1 prefixes."
 		},
 		{
 			"name": "Venues",
@@ -853,7 +853,7 @@
 					"response": []
 				}
 			],
-			"description": "Venue management endpoints"
+			"description": "Venue management endpoints. All endpoints are available with both / and /v1 prefixes."
 		},
 		{
 			"name": "Bookings",
@@ -1168,7 +1168,7 @@
 					"response": []
 				}
 			],
-			"description": "Booking management endpoints"
+			"description": "Booking management endpoints. All endpoints are available with both / and /v1 prefixes."
 		},
 		{
 			"name": "Status Check",

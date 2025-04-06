@@ -33,12 +33,14 @@ A comprehensive RESTful API for a Music Booking platform that handles artist pro
 
 ## API Endpoints
 
+> **Note**: All endpoints are available both directly from the root (`/`) and with the `/v1` prefix (e.g., both `/auth/login` and `/v1/auth/login` work identically).
+
 ### Authentication
 
 - `POST /auth/register` - Register a new user
 - `POST /auth/login` - Login and get access token
 - `GET /auth/me` - Get current user profile
-- `POST /auth/upgrade-to-organizer` - Upgrade user to organizer role
+- `POST /auth/user/upgrade` - Upgrade user to different role
 
 ### Artists
 
@@ -47,6 +49,7 @@ A comprehensive RESTful API for a Music Booking platform that handles artist pro
 - `PUT /artists/profile` - Update artist profile
 - `GET /artists` - Search artists with filters
 - `GET /artists/:id` - Get artist by ID
+- `POST /artists/portfolio/images` - Upload portfolio images
 
 ### Events
 
