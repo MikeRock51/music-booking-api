@@ -168,12 +168,20 @@ describe("Artist Controller", () => {
         bio: "Updated artist bio",
       };
 
-      try {
-        artistUser = await createTestUser(testArtistUserData);
-        artistToken = createToken(artistUser);
-        testArtistData.user = testArtist._id;
-        testArtist = await createTestArtist(testArtistData);
-      } catch (error) {} // If an error is thrown, then the user already exist
+      // Recreate artist user and ensure it's properly created with profile
+      artistUser = await createTestUser({
+        ...testArtistUserData,
+        email: `artist_update${Date.now()}@artisttest.com`
+      });
+      artistToken = createToken(artistUser);
+
+      // Create artist profile linked to this user
+      const artistData = {
+        ...testArtistData,
+        user: artistUser._id
+      };
+
+      testArtist = await Artist.create(artistData);
 
       const response = await request(app)
         .put("/v1/artists/profile")

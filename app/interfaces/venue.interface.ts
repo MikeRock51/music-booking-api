@@ -28,6 +28,7 @@ export interface CreateVenueInput {
   images?: string[];
   description: string;
   contactInfo: VenueContactInfoInput;
+  owner: Types.ObjectId | string;
 }
 
 export interface UpdateVenueInput {

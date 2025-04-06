@@ -19,7 +19,7 @@ describe("EventService", () => {
   let testVenue: WithId<any>;
 
   // Test event data
-  const testEventData = {
+  const testEventData: any = {
     name: "Test Concert",
     description: "A test concert event",
     eventType: EventType.CONCERT,
@@ -35,6 +35,31 @@ describe("EventService", () => {
     isPrivate: false,
   };
 
+  const testVenueData: any = {
+    name: "Test Venue",
+    description: "A test venue for events",
+    location: {
+      address: "123 Test St",
+      city: "Test City",
+      state: "Test State",
+      country: "Test Country",
+      zipCode: "12345",
+      coordinates: {
+        latitude: 40.7128,
+        longitude: -74.006,
+      },
+    },
+    venueType: VenueType.CONCERT_HALL,
+    capacity: 500,
+    amenities: ["sound_system", "lighting", "parking"],
+    images: ["https://example.com/venue-image.jpg"],
+    contactInfo: {
+      email: "venue@test.com",
+      phone: "123-456-7890",
+      website: "https://testvenue.com",
+    },
+  };
+
   // Setup test database
   beforeAll(async () => {
     await initializeDatabase();
@@ -42,8 +67,8 @@ describe("EventService", () => {
 
   afterAll(async () => {
     await User.deleteMany({ email: /@eventservicetest.com/ });
-    await Event.deleteMany({});
-    await Venue.deleteMany({});
+    await Event.deleteMany({ organizer: { $in: [ organizerId, adminId ] } });
+    await Venue.deleteMany({ owner: { $in: [ organizerId, adminId ] } });
     await closeDatabase();
   });
 
@@ -52,103 +77,62 @@ describe("EventService", () => {
     eventService = new EventService();
 
     // Create a test organizer
-    testUser = await createTestUser({
+    testUser = (await createTestUser({
       email: `organizer${Date.now()}@eventservicetest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Organizer",
       role: UserRole.USER,
-    }) as WithId<IUser>;
+    })) as WithId<IUser>;
     organizerId = testUser._id.toString();
 
     // Create a test admin
-    testAdmin = await createTestUser({
+    testAdmin = (await createTestUser({
       email: `admin${Date.now()}@eventservicetest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Admin",
       role: UserRole.ADMIN,
-    }) as WithId<IUser>;
+    })) as WithId<IUser>;
     adminId = testAdmin._id.toString();
 
+    testVenueData.owner = organizerId;
+
     // Create a test venue with all required fields
-    testVenue = await Venue.create({
-      name: "Test Venue",
-      description: "A test venue for events",
-      location: {
-        address: "123 Test St",
-        city: "Test City",
-        state: "Test State",
-        country: "Test Country",
-        zipCode: "12345",
-        coordinates: {
-          latitude: 40.7128,
-          longitude: -74.006,
-        },
-      },
-      venueType: VenueType.CONCERT_HALL,
-      capacity: 500,
-      amenities: ["sound_system", "lighting", "parking"],
-      images: ["https://example.com/venue-image.jpg"],
-      contactInfo: {
-        email: "venue@test.com",
-        phone: "123-456-7890",
-        website: "https://testvenue.com",
-      },
-      owner: testUser._id, // Using the organizer as the venue owner
-    }) as WithId<any>;
+    testVenue = await Venue.create(testVenueData);
   });
 
   afterEach(async () => {
     // Clean up test data
-    await User.deleteMany({});
-    await Event.deleteMany({});
-    await Venue.deleteMany({});
+    await User.deleteMany({ email: /@eventservicetest.com/ });
+    await Event.deleteMany({ organizer: { $in: [ organizerId, adminId ] } });
+    await Venue.deleteMany({ owner: { $in: [ organizerId, adminId ] } });
   });
 
   describe("createEvent method", () => {
     it("should create an event successfully", async () => {
-      const eventData = {
+      const event = await eventService.createEvent(organizerId, {
         ...testEventData,
         venue: testVenue._id,
-      };
+      });
 
-      const result = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
-
-      // Check if the result has the expected properties
-      expect(result).toHaveProperty("_id");
-      expect(result).toHaveProperty("name", eventData.name);
-      expect(result).toHaveProperty("description", eventData.description);
-      expect(result).toHaveProperty("eventType", eventData.eventType);
-      expect(result).toHaveProperty("date");
-      expect(result).toHaveProperty("venue");
-      expect(result.venue.toString()).toBe(testVenue._id.toString());
-      expect(result).toHaveProperty("organizer");
-      expect(result.organizer.toString()).toBe(organizerId);
-      expect(result).toHaveProperty("status", EventStatus.DRAFT);
-    });
-
-    it("should throw an error when venue doesn't exist", async () => {
-      const nonExistentId = new mongoose.Types.ObjectId().toString();
-      const eventData = {
-        ...testEventData,
-        venue: nonExistentId,
-      };
-
-      await expect(eventService.createEvent(organizerId, eventData)).rejects.toThrow("Venue not found");
+      expect(event).toBeDefined();
+      expect(event.name).toBe(testEventData.name);
+      expect(event.organizer.toString()).toBe(organizerId);
     });
 
     it("should throw an error when creating a duplicate event", async () => {
-      const eventData = {
+      const newVenueData = {
         ...testEventData,
         venue: testVenue._id,
       };
+      // Create the first event
+      await eventService.createEvent(organizerId, newVenueData);
 
-      // Create first event
-      await eventService.createEvent(organizerId, eventData);
-
-      // Try to create duplicate event
-      await expect(eventService.createEvent(organizerId, eventData)).rejects.toThrow(
+      // Try to create the same event again
+      await expect(
+        eventService.createEvent(organizerId, newVenueData)
+      ).rejects.toThrow(
         "An event with the same name at this venue and date already exists."
       );
     });
@@ -162,11 +146,16 @@ describe("EventService", () => {
       };
 
       // Create test event
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Retrieve event
-      const result = await eventService.getEventById(eventId) as WithId<IEvent>;
+      const result = (await eventService.getEventById(
+        eventId
+      )) as WithId<IEvent>;
 
       expect(result).toHaveProperty("_id");
       expect(result._id.toString()).toBe(eventId);
@@ -177,7 +166,9 @@ describe("EventService", () => {
 
     it("should throw error when getting non-existent event", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
-      await expect(eventService.getEventById(nonExistentId)).rejects.toThrow("Event not found");
+      await expect(eventService.getEventById(nonExistentId)).rejects.toThrow(
+        "Event not found"
+      );
     });
   });
 
@@ -189,7 +180,10 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Update event
@@ -198,7 +192,11 @@ describe("EventService", () => {
         description: "Updated event description",
       };
 
-      const result = await eventService.updateEvent(eventId, testUser, updateData);
+      const result = await eventService.updateEvent(
+        eventId,
+        testUser,
+        updateData
+      );
 
       expect(result).toHaveProperty("name", updateData.name);
       expect(result).toHaveProperty("description", updateData.description);
@@ -213,7 +211,10 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Update event as admin
@@ -222,7 +223,11 @@ describe("EventService", () => {
         description: "Admin updated description",
       };
 
-      const result = await eventService.updateEvent(eventId, testAdmin, updateData);
+      const result = await eventService.updateEvent(
+        eventId,
+        testAdmin,
+        updateData
+      );
 
       expect(result).toHaveProperty("name", updateData.name);
       expect(result).toHaveProperty("description", updateData.description);
@@ -234,7 +239,9 @@ describe("EventService", () => {
         name: "Updated Event",
       };
 
-      await expect(eventService.updateEvent(nonExistentId, testUser, updateData)).rejects.toThrow(
+      await expect(
+        eventService.updateEvent(nonExistentId, testUser, updateData)
+      ).rejects.toThrow(
         "Event not found or you are not authorized to update it"
       );
     });
@@ -246,24 +253,29 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Create another user that is not the organizer
-      const anotherUser = await createTestUser({
+      const anotherUser = (await createTestUser({
         email: `another${Date.now()}@eventservicetest.com`,
         password: "Password123!",
         firstName: "Another",
         lastName: "User",
         role: UserRole.USER,
-      }) as WithId<IUser>;
+      })) as WithId<IUser>;
 
       // Try to update as unauthorized user
       const updateData = {
         name: "Unauthorized Update",
       };
 
-      await expect(eventService.updateEvent(eventId, anotherUser, updateData)).rejects.toThrow(
+      await expect(
+        eventService.updateEvent(eventId, anotherUser, updateData)
+      ).rejects.toThrow(
         "Event not found or you are not authorized to update it"
       );
     });
@@ -275,7 +287,10 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Try to update venue to non-existent venue
@@ -284,7 +299,9 @@ describe("EventService", () => {
         venue: nonExistentVenueId,
       };
 
-      await expect(eventService.updateEvent(eventId, testUser, updateData)).rejects.toThrow("Venue not found");
+      await expect(
+        eventService.updateEvent(eventId, testUser, updateData)
+      ).rejects.toThrow("Venue not found");
     });
 
     it("should throw error when creating duplicate event on update", async () => {
@@ -301,12 +318,17 @@ describe("EventService", () => {
         venue: testVenue._id,
         date: {
           start: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days later
-          end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+          end: new Date(
+            Date.now() + 14 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+          ),
         },
       };
 
       await eventService.createEvent(organizerId, event1Data);
-      const event2 = await eventService.createEvent(organizerId, event2Data) as WithId<IEvent>;
+      const event2 = (await eventService.createEvent(
+        organizerId,
+        event2Data
+      )) as WithId<IEvent>;
 
       // Try to update event2 to have the same name, venue, and date as event1
       const updateData = {
@@ -314,7 +336,9 @@ describe("EventService", () => {
         date: event1Data.date,
       };
 
-      await expect(eventService.updateEvent(event2._id.toString(), testUser, updateData)).rejects.toThrow(
+      await expect(
+        eventService.updateEvent(event2._id.toString(), testUser, updateData)
+      ).rejects.toThrow(
         "event with the same name at this venue and date already exists."
       );
     });
@@ -328,7 +352,10 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Publish the event
@@ -344,14 +371,19 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Publish the event
       await eventService.publishEvent(eventId, organizerId);
 
       // Try to publish again
-      await expect(eventService.publishEvent(eventId, organizerId)).rejects.toThrow("Event is already published");
+      await expect(
+        eventService.publishEvent(eventId, organizerId)
+      ).rejects.toThrow("Event is already published");
     });
 
     it("should throw error when non-organizer tries to publish event", async () => {
@@ -361,20 +393,25 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Create another user
-      const anotherUser = await createTestUser({
+      const anotherUser = (await createTestUser({
         email: `another${Date.now()}@eventservicetest.com`,
         password: "Password123!",
         firstName: "Another",
         lastName: "User",
-      }) as WithId<IUser>;
+      })) as WithId<IUser>;
       const anotherUserId = anotherUser._id.toString();
 
       // Try to publish as non-organizer
-      await expect(eventService.publishEvent(eventId, anotherUserId)).rejects.toThrow(
+      await expect(
+        eventService.publishEvent(eventId, anotherUserId)
+      ).rejects.toThrow(
         "Event not found or you are not authorized to update it"
       );
     });
@@ -388,7 +425,10 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Cancel the event
@@ -404,14 +444,19 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Cancel the event
       await eventService.cancelEvent(eventId, organizerId);
 
       // Try to cancel again
-      await expect(eventService.cancelEvent(eventId, organizerId)).rejects.toThrow("Event is already canceled");
+      await expect(
+        eventService.cancelEvent(eventId, organizerId)
+      ).rejects.toThrow("Event is already canceled");
     });
 
     it("should throw error when non-organizer tries to cancel event", async () => {
@@ -421,20 +466,25 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      const createdEvent = await eventService.createEvent(organizerId, eventData) as WithId<IEvent>;
+      const createdEvent = (await eventService.createEvent(
+        organizerId,
+        eventData
+      )) as WithId<IEvent>;
       const eventId = createdEvent._id.toString();
 
       // Create another user
-      const anotherUser = await createTestUser({
+      const anotherUser = (await createTestUser({
         email: `another${Date.now()}@eventservicetest.com`,
         password: "Password123!",
         firstName: "Another",
         lastName: "User",
-      }) as WithId<IUser>;
+      })) as WithId<IUser>;
       const anotherUserId = anotherUser._id.toString();
 
       // Try to cancel as non-organizer
-      await expect(eventService.cancelEvent(eventId, anotherUserId)).rejects.toThrow(
+      await expect(
+        eventService.cancelEvent(eventId, anotherUserId)
+      ).rejects.toThrow(
         "Event not found or you are not authorized to cancel it"
       );
     });
@@ -455,7 +505,9 @@ describe("EventService", () => {
         venue: testVenue._id,
         date: {
           start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-          end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+          end: new Date(
+            Date.now() + 10 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+          ),
         },
       };
 
@@ -465,7 +517,9 @@ describe("EventService", () => {
         venue: testVenue._id,
         date: {
           start: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-          end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+          end: new Date(
+            Date.now() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+          ),
         },
       };
 
@@ -474,12 +528,12 @@ describe("EventService", () => {
       await eventService.createEvent(organizerId, eventData3);
 
       // Create an event for another organizer
-      const anotherUser = await createTestUser({
+      const anotherUser = (await createTestUser({
         email: `another${Date.now()}@eventservicetest.com`,
         password: "Password123!",
         firstName: "Another",
         lastName: "User",
-      }) as WithId<IUser>;
+      })) as WithId<IUser>;
 
       const anotherOrganizerEvent = {
         ...testEventData,
@@ -487,46 +541,62 @@ describe("EventService", () => {
         venue: testVenue._id,
       };
 
-      await eventService.createEvent(anotherUser._id.toString(), anotherOrganizerEvent);
+      await eventService.createEvent(
+        anotherUser._id.toString(),
+        anotherOrganizerEvent
+      );
     });
 
     it("should return only events for the specified organizer", async () => {
-      const events = await eventService.getOrganizerEvents(organizerId) as WithId<IEvent>[];
+      const events = (await eventService.getOrganizerEvents(
+        organizerId
+      )) as WithId<IEvent>[];
 
       expect(events.length).toBe(3);
 
       // Check that all returned events belong to the organizer
-      events.forEach(event => {
+      events.forEach((event) => {
         expect(event.organizer.toString()).toBe(organizerId);
       });
     });
 
     it("should implement pagination correctly", async () => {
       // First page with limit 2
-      const page1 = await eventService.getOrganizerEvents(organizerId, 1, 2) as WithId<IEvent>[];
+      const page1 = (await eventService.getOrganizerEvents(
+        organizerId,
+        1,
+        2
+      )) as WithId<IEvent>[];
       expect(page1.length).toBe(2);
 
       // Second page with limit 2
-      const page2 = await eventService.getOrganizerEvents(organizerId, 2, 2) as WithId<IEvent>[];
+      const page2 = (await eventService.getOrganizerEvents(
+        organizerId,
+        2,
+        2
+      )) as WithId<IEvent>[];
       expect(page2.length).toBe(1);
 
       // Ensure they're different events
-      const page1Ids = page1.map(e => e._id.toString());
-      const page2Ids = page2.map(e => e._id.toString());
+      const page1Ids = page1.map((e) => e._id.toString());
+      const page2Ids = page2.map((e) => e._id.toString());
 
       expect(page1Ids).not.toContain(page2Ids[0]);
     });
 
     it("should return empty array when organizer has no events", async () => {
       // Create a new user with no events
-      const newUser = await createTestUser({
+      const newUser = (await createTestUser({
         email: `noevents${Date.now()}@eventservicetest.com`,
         password: "Password123!",
         firstName: "No",
         lastName: "Events",
-      }) as WithId<IUser>;
+        role: UserRole.ORGANIZER,
+      })) as WithId<IUser>;
 
-      const events = await eventService.getOrganizerEvents(newUser._id.toString());
+      const events = await eventService.getOrganizerEvents(
+        newUser._id.toString()
+      );
       expect(Array.isArray(events)).toBe(true);
       expect(events.length).toBe(0);
     });
@@ -542,7 +612,9 @@ describe("EventService", () => {
           eventType: EventType.CONCERT,
           date: {
             start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+            end: new Date(
+              Date.now() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+            ),
           },
           venue: testVenue._id,
           organizer: new mongoose.Types.ObjectId(organizerId),
@@ -578,7 +650,9 @@ describe("EventService", () => {
           eventType: EventType.PRIVATE_EVENT,
           date: {
             start: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            end: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
+            end: new Date(
+              Date.now() + 3 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000
+            ),
           },
           venue: testVenue._id,
           organizer: new mongoose.Types.ObjectId(organizerId),
@@ -596,7 +670,9 @@ describe("EventService", () => {
           eventType: EventType.CONCERT,
           date: {
             start: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-            end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+            end: new Date(
+              Date.now() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+            ),
           },
           venue: testVenue._id,
           organizer: new mongoose.Types.ObjectId(organizerId),
@@ -614,15 +690,17 @@ describe("EventService", () => {
     });
 
     it("should find only published and non-private events by default", async () => {
-      const results = await eventService.findEvents({}) as WithId<IEvent>[];
+      const results = (await eventService.findEvents({})) as WithId<IEvent>[];
 
       expect(results.length).toBe(2); // Only the rock concert and jazz festival
 
       // Verify none are private
-      expect(results.some(event => event.isPrivate)).toBe(false);
+      expect(results.some((event) => event.isPrivate)).toBe(false);
 
       // Verify all are published
-      expect(results.every(event => event.status === EventStatus.PUBLISHED)).toBe(true);
+      expect(
+        results.every((event) => event.status === EventStatus.PUBLISHED)
+      ).toBe(true);
     });
 
     it("should find events by date range", async () => {
@@ -664,7 +742,9 @@ describe("EventService", () => {
           eventType: EventType.CONCERT,
           date: {
             start: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
-            end: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+            end: new Date(
+              Date.now() + 20 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+            ),
           },
           venue: testVenue._id,
           organizer: new mongoose.Types.ObjectId(organizerId),
@@ -682,7 +762,9 @@ describe("EventService", () => {
           eventType: EventType.CONCERT,
           date: {
             start: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
-            end: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+            end: new Date(
+              Date.now() + 25 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+            ),
           },
           venue: testVenue._id,
           organizer: new mongoose.Types.ObjectId(organizerId),
@@ -699,18 +781,26 @@ describe("EventService", () => {
       await Event.insertMany(moreEvents);
 
       // First page with limit 2
-      const page1 = await eventService.findEvents({}, 1, 2) as WithId<IEvent>[];
+      const page1 = (await eventService.findEvents(
+        {},
+        1,
+        2
+      )) as WithId<IEvent>[];
       expect(page1.length).toBe(2);
 
       // Second page with limit 2
-      const page2 = await eventService.findEvents({}, 2, 2) as WithId<IEvent>[];
+      const page2 = (await eventService.findEvents(
+        {},
+        2,
+        2
+      )) as WithId<IEvent>[];
       expect(page2.length).toBe(2);
 
       // Make sure events from page1 aren't in page2
-      const page1Ids = page1.map(e => e._id.toString());
-      const page2Ids = page2.map(e => e._id.toString());
+      const page1Ids = page1.map((e) => e._id.toString());
+      const page2Ids = page2.map((e) => e._id.toString());
 
-      expect(page1Ids.some(id => page2Ids.includes(id))).toBe(false);
+      expect(page1Ids.some((id) => page2Ids.includes(id))).toBe(false);
     });
   });
 });

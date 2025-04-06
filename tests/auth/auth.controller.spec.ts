@@ -202,14 +202,18 @@ describe("AuthController", () => {
 
   describe("POST /v1/auth/user/upgrade", () => {
     it("should upgrade user role when admin is authenticated", async () => {
-      try {
-        testUser = await createTestUser(testUserData);
-        userToken = createToken(testUser);
-        userId = testUser._id.toString();
+      // Create fresh users for this test to ensure they exist in DB
+      const uniqueUser = await createTestUser({
+        ...testUserData,
+        email: `upgrade_test${Date.now()}@authcontrollerexample.com`
+      });
+      userId = (uniqueUser._id as mongoose.Types.ObjectId).toString();
 
-        adminUser = await createTestUser(testAdminUserData);
-        adminToken = createToken(adminUser);
-      } catch(error) {}
+      const uniqueAdmin = await createTestUser({
+        ...testAdminUserData,
+        email: `admin_upgrade_test${Date.now()}@authcontrollerexample.com`
+      });
+      adminToken = createToken(uniqueAdmin);
 
       const upgradeData = {
         userId: userId,

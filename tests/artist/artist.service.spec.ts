@@ -108,6 +108,13 @@ describe("ArtistService", () => {
     });
 
     it("should throw error when user already has an artist profile", async () => {
+      // Ensure test user exists in database
+      testUser = await createTestUser({
+        ...testUserData,
+        email: `artist_duplicate${Date.now()}@artistservicetest.com`
+      });
+      userId = testUser._id.toString();
+
       const artistData: ArtistProfileInput = {
         artistName: "Test Artist",
         genres: [MusicGenre.POP],
@@ -119,11 +126,6 @@ describe("ArtistService", () => {
           per: "hour",
         },
       };
-
-      try {
-        testUser = await createTestUser(testUserData);
-        userId = testUser._id.toString();
-      } catch (error) {}
 
       // Create the first profile
       await artistService.createArtistProfile(userId, artistData);

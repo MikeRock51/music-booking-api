@@ -6,7 +6,7 @@ import { initializeDatabase, closeDatabase } from "../../app/config/database";
 import User, { UserRole } from "../../app/models/User";
 import Event, { EventStatus, EventType } from "../../app/models/Event";
 import Venue, { VenueType } from "../../app/models/Venue";
-import { createTestUser, createToken, testUserData } from "../helpers";
+import { createTestUser, createToken } from "../helpers";
 import "dotenv/config";
 
 describe("Event Controller", () => {
@@ -19,23 +19,47 @@ describe("Event Controller", () => {
   let userToken: string;
   let organizerToken: string;
   let adminToken: string;
+  let adminId: ObjectId;
+  let organizerId: ObjectId;
+
+  const testUserData = {
+    email: `user${Date.now()}@eventcontrollertest.com`,
+    password: "Password123!",
+    firstName: "Test",
+    lastName: "User",
+    role: UserRole.USER,
+  };
 
   // Test event data
-  const testEventData = {
-    name: "Test Event",
-    description: "A test event for unit testing",
+  const testEventData: any = {
+    name: "Test Venue",
+    description: "A venue for testing events",
+    location: {
+      address: "123 Test St",
+      city: "Test City",
+      state: "Test State",
+      country: "Test Country",
+      zipCode: "12345",
+    },
+    capacity: 500,
+    venueType: VenueType.CONCERT_HALL,
+    contactInfo: {
+      email: "venue-test@example.com",
+      phone: "123-456-7890",
+      website: "http://venue-test.com",
+    },
     eventType: EventType.CONCERT,
     date: {
-      start: new Date(Date.now() + 86400000), // tomorrow
-      end: new Date(Date.now() + 90000000), // tomorrow + a bit
+      start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // 3 hours later
     },
     ticketInfo: {
-      price: 25,
+      price: 50,
       totalTickets: 100,
     },
   };
 
-  const testVenueData = {
+  const testVenueData: any = {
     name: "Test Venue for Events",
     location: {
       address: "123 Test Street",
@@ -60,8 +84,8 @@ describe("Event Controller", () => {
 
   afterAll(async () => {
     await User.deleteMany({ email: /@eventcontrollertest.com/ });
-    await Event.deleteMany({});
-    await Venue.deleteMany({});
+    await Event.deleteMany({ organizer: { $in: [ organizerId, adminId ] } });
+    await Venue.deleteMany({ owner: { $in: [ organizerId, adminId ] } });
     await closeDatabase();
   });
 
@@ -89,12 +113,12 @@ describe("Event Controller", () => {
     userToken = createToken(testUser);
     organizerToken = createToken(organizerUser);
     adminToken = createToken(adminUser);
+    adminId = adminUser._id;
+    organizerId = organizerUser._id;
 
+    testVenueData.owner = organizerUser._id,
     // Create a test venue
-    testVenue = await Venue.create({
-      ...testVenueData,
-      owner: organizerUser._id,
-    });
+    testVenue = await Venue.create(testVenueData);
 
     // Create a test event
     testEvent = await Event.create({
@@ -106,35 +130,27 @@ describe("Event Controller", () => {
 
   afterEach(async () => {
     await User.deleteMany({ email: /@eventcontrollertest.com/ });
-    await Event.deleteMany({});
-    await Venue.deleteMany({});
+    await Event.deleteMany({ organizer: { $in: [ organizerId, adminId ] } });
+    await Venue.deleteMany({ owner: { $in: [ organizerId, adminId ] } });
   });
 
   describe("POST /events", () => {
     it("should create an event when authenticated as organizer", async () => {
-      try {
-        organizerUser = await createTestUser({
-          ...testUserData,
-          email: `organizer${Date.now()}@eventcontrollertest.com`,
-          role: UserRole.ORGANIZER,
-        });
-        organizerToken = createToken(organizerUser);
-
-        testVenue = await Venue.create({
-          ...testVenueData,
-          owner: organizerUser._id,
-        });
-        // testEvent = await Event.create({
-        //   ...testEventData,
-        //   venue: testVenue._id,
-        //   organizer: organizerUser._id,
-        // });
-      } catch (error) {}
-
       const eventData = {
-        ...testEventData,
-        name: "New Test Event",
+        name: "Test Event Creation",
+        description: "Event for controller test",
+        eventType: EventType.CONCERT,
+        date: {
+          start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          end: new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+          ), // 3 hours later
+        },
         venue: testVenue._id,
+        ticketInfo: {
+          price: 50,
+          totalTickets: 100,
+        },
       };
 
       const response = await request(app)
@@ -153,9 +169,18 @@ describe("Event Controller", () => {
 
     it("should create an event when authenticated as admin", async () => {
       const eventData = {
-        ...testEventData,
         name: "Admin Created Event",
+        description: "Event created by admin",
+        eventType: EventType.FESTIVAL,
+        date: {
+          start: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          end: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000),
+        },
         venue: testVenue._id,
+        ticketInfo: {
+          price: 100,
+          totalTickets: 500,
+        },
       };
 
       const response = await request(app)

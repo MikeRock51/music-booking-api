@@ -95,8 +95,28 @@ describe("Venue Service", () => {
   describe("createVenue", () => {
     it("should create a venue successfully", async () => {
       const venueData = {
-        ...testVenueData,
-        name: "New Service Test Venue",
+        name: `Test Venue ${Date.now()}`,
+        description: "Test venue for testing",
+        location: {
+          address: "123 Test St",
+          city: "Test City",
+          state: "Test State",
+          country: "Test Country",
+          zipCode: "12345",
+          coordinates: {
+            latitude: 40.7128,
+            longitude: -74.006
+          }
+        },
+        venueType: VenueType.CONCERT_HALL,
+        capacity: 500,
+        amenities: ["stage", "sound_system", "lighting"],
+        contactInfo: {
+          email: `test${Date.now()}@venueservice.test`,
+          phone: "123-456-7890",
+          website: "https://testvenue.com"
+        },
+        owner: organizerUser._id
       };
 
       try {
@@ -202,6 +222,9 @@ describe("Venue Service", () => {
 
   describe("updateVenue", () => {
     it("should update a venue when owner is updating", async () => {
+      // Recreate organizer to ensure it exists in the database
+      organizerUser = await createTestUser(organizerUserData);
+
       const updateData = {
         name: "Updated Service Venue",
         description: "Updated description",
@@ -220,6 +243,9 @@ describe("Venue Service", () => {
     });
 
     it("should update a venue when admin is updating", async () => {
+      // Recreate admin to ensure it exists in the database
+      adminUser = await createTestUser(adminUserData);
+
       const updateData = {
         name: "Admin Updated Venue",
         isVerified: true,
@@ -236,6 +262,9 @@ describe("Venue Service", () => {
     });
 
     it("should throw error when non-owner/non-admin tries to update", async () => {
+      // Recreate test user to ensure it exists in the database
+      testUser = await createTestUser(testUserData);
+
       const updateData = {
         name: "Unauthorized Update",
       };
@@ -250,6 +279,9 @@ describe("Venue Service", () => {
     });
 
     it("should throw error when non-admin tries to update isVerified", async () => {
+      // Recreate organizer to ensure it exists in the database
+      organizerUser = await createTestUser(organizerUserData);
+
       const updateData = {
         name: "Valid Update",
         isVerified: true,
@@ -267,6 +299,9 @@ describe("Venue Service", () => {
 
   describe("deleteVenue", () => {
     it("should delete a venue when owner is deleting", async () => {
+      // Recreate organizer user to ensure it exists in the database
+      organizerUser = await createTestUser(organizerUserData);
+
       await venueService.deleteVenue(
         (testVenue._id as Types.ObjectId).toString(),
         (organizerUser._id as Types.ObjectId).toString()
@@ -278,6 +313,9 @@ describe("Venue Service", () => {
     });
 
     it("should delete a venue when admin is deleting", async () => {
+      // Recreate admin user to ensure it exists in the database
+      adminUser = await createTestUser(adminUserData);
+
       await venueService.deleteVenue(
         (testVenue._id as Types.ObjectId).toString(),
         (adminUser._id as Types.ObjectId).toString()
@@ -289,6 +327,9 @@ describe("Venue Service", () => {
     });
 
     it("should throw error when non-owner/non-admin tries to delete", async () => {
+      // Recreate test user to ensure it exists in the database
+      testUser = await createTestUser(testUserData);
+
       await expect(
         venueService.deleteVenue(
           (testVenue._id as Types.ObjectId).toString(),
@@ -298,6 +339,9 @@ describe("Venue Service", () => {
     });
 
     it("should throw error for non-existent venue ID", async () => {
+      // Recreate admin user to ensure it exists in the database
+      adminUser = await createTestUser(adminUserData);
+
       const nonExistentId = new mongoose.Types.ObjectId().toString();
 
       await expect(
@@ -442,13 +486,18 @@ describe("Venue Service", () => {
     });
 
     it("should filter venues by owner", async () => {
+      // Recreate test user to ensure it exists in the database
+      testUser = await createTestUser(testUserData);
+
       const venues = await venueService.findVenues({
         owner: (testUser._id as Types.ObjectId).toString(),
       });
 
       venues.forEach((venue) => {
         // Check if owner is populated (object) or just an ID
-        const venueOwnerId = venue.owner._id.toString();
+        const venueOwnerId = typeof venue.owner === 'object' && venue.owner !== null && 'toString' in venue.owner
+          ? venue.owner.toString()
+          : String(venue.owner);
 
         expect(venueOwnerId).toBe((testUser._id as Types.ObjectId).toString());
       });
