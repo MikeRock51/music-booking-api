@@ -81,7 +81,6 @@ class ArtistService {
     artistId: string,
     updateData: any
   ): Promise<IArtist> {
-
     const artist = await Artist.findOneAndUpdate(
       { user: artistId },
       { ...updateData },
@@ -137,7 +136,7 @@ class ArtistService {
 
     // Execute query
     const artists = await Artist.find(query)
-      .sort({ rating: -1 })
+      .sort({ _id: 1 })
       .skip(skip)
       .limit(limit)
       .populate({

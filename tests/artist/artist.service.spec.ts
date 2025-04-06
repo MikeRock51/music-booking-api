@@ -24,7 +24,7 @@ describe("ArtistService", () => {
 
   afterAll(async () => {
     await User.deleteMany({ email: /@artistservicetest.com/ });
-    await Artist.deleteMany({});
+    await Artist.deleteMany({ user: testUser._id });
     await closeDatabase();
   });
 
@@ -38,7 +38,7 @@ describe("ArtistService", () => {
   afterEach(async () => {
     // Clean up test data after each test
     await User.deleteMany({ email: /@artistservicetest.com/ });
-    await Artist.deleteMany({});
+    await Artist.deleteMany({ user: testUser._id });
   });
 
   describe("createArtistProfile method", () => {
@@ -314,7 +314,12 @@ describe("ArtistService", () => {
 
       expect(Array.isArray(result)).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toHaveProperty("artistName", "Rock Band");
+
+      // Check that every returned artist has the ROCK genre
+      const allHaveRockGenre = result.every((artist) =>
+        artist.genres.includes(MusicGenre.ROCK)
+      );
+      expect(allHaveRockGenre).toBe(true);
     });
 
     it("should find artists with location filter", async () => {
@@ -366,6 +371,9 @@ describe("ArtistService", () => {
       expect((page1[0]._id as ObjectId).toString()).not.toBe(
         (page2[0]._id as ObjectId).toString()
       );
+
+      // Additional check to confirm different artists by name
+      expect(page1[0].artistName).not.toBe(page2[0].artistName);
     });
   });
 

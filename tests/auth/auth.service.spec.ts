@@ -13,12 +13,10 @@ describe('AuthService', () => {
     await initializeDatabase();
     // Clean up any test users
     await User.deleteMany({ email: /@serviceexample.com/ });
-    await Artist.deleteMany({});
   });
 
   afterAll(async () => {
     await User.deleteMany({ email: /@serviceexample.com/ });
-    await Artist.deleteMany({});
     await closeDatabase();
   });
 
@@ -30,7 +28,6 @@ describe('AuthService', () => {
   afterEach(async () => {
     // Clean up test data after each test
     await User.deleteMany({ email: /@serviceexample.com/ });
-    await Artist.deleteMany({});
   });
 
   describe('register method', () => {

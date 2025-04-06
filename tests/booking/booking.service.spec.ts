@@ -2,7 +2,8 @@ import mongoose, { ObjectId } from "mongoose";
 import { initializeDatabase, closeDatabase } from "../../app/config/database";
 import User, { UserRole } from "../../app/models/User";
 import Artist from "../../app/models/Artist";
-import Event from "../../app/models/Event";
+import Event, { EventStatus, EventType } from "../../app/models/Event";
+import Venue, { VenueType } from "../../app/models/Venue";
 import Booking, { BookingStatus, PaymentStatus } from "../../app/models/Booking";
 import BookingService from "../../app/services/BookingService";
 import { CreateBookingInput } from "../../app/interfaces/booking.interface";
@@ -19,6 +20,7 @@ describe("Booking Service", () => {
   let testArtist: any;
   let testEvent: any;
   let testBooking: any;
+  let testVenue: any;
   let bookingService: BookingService;
 
   beforeAll(async () => {
@@ -27,17 +29,18 @@ describe("Booking Service", () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany({ email: /@bookingtest.com/ });
-    await Artist.deleteMany({ artistName: /Test Artist/ });
-    await Event.deleteMany({ name: /Test Event/ });
-    await Booking.deleteMany({});
+    await User.deleteMany({ email: /@bookingservicetest.com/ });
+    await Artist.deleteMany({ user: artistUser._id });
+    await Event.deleteMany({ organizer: organizerUser._id });
+    await Venue.deleteMany({ owner: organizerUser._id });
+    await Booking.deleteMany({ event: testEvent._id });
     await closeDatabase();
   });
 
   beforeEach(async () => {
     // Create test users
     artistUser = await createTestUser({
-      email: `artist${Date.now()}@bookingtest.com`,
+      email: `artist${Date.now()}@bookingservicetest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Artist",
@@ -45,7 +48,7 @@ describe("Booking Service", () => {
     });
 
     organizerUser = await createTestUser({
-      email: `organizer${Date.now()}@bookingtest.com`,
+      email: `organizer${Date.now()}@bookingservicetest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Organizer",
@@ -53,7 +56,7 @@ describe("Booking Service", () => {
     });
 
     adminUser = await createTestUser({
-      email: `admin${Date.now()}@bookingtest.com`,
+      email: `admin${Date.now()}@bookingservicetest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Admin",
@@ -67,6 +70,29 @@ describe("Booking Service", () => {
     };
     testArtist = await Artist.create(artistData);
 
+    // Create test venue
+    testVenue = await Venue.create({
+      name: "Test Venue",
+      location: {
+        address: "123 Test Street",
+        city: "Test City",
+        state: "Test State",
+        country: "Test Country",
+        zipCode: "12345"
+      },
+      capacity: 500,
+      venueType: VenueType.CLUB,
+      amenities: ["Sound System", "Stage Lighting"],
+      images: ["test-image.jpg"],
+      description: "A test venue for events",
+      contactInfo: {
+        email: "venue@test.com",
+        phone: "123-456-7890"
+      },
+      owner: organizerUser._id,
+      isVerified: true
+    });
+
     // Create test event
     const startDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week in future
     const endDate = new Date(startDate.getTime() + 8 * 60 * 60 * 1000); // 8 hours after start
@@ -78,10 +104,19 @@ describe("Booking Service", () => {
         start: startDate,
         end: endDate
       },
-      location: "Test Location",
+      venue: testVenue._id,
       organizer: organizerUser._id,
-      eventType: "concert",
-      status: "upcoming",
+      eventType: EventType.CONCERT,
+      status: EventStatus.PUBLISHED,
+      ticketInfo: {
+        available: true,
+        price: 25,
+        currency: "USD",
+        totalTickets: 200,
+        soldTickets: 0
+      },
+      images: ["test-event.jpg"],
+      isPrivate: false
     });
 
     // Create a test booking
@@ -108,10 +143,11 @@ describe("Booking Service", () => {
   });
 
   afterEach(async () => {
-    await User.deleteMany({ email: /@bookingtest.com/ });
-    await Artist.deleteMany({ artistName: /Test Artist/ });
-    await Event.deleteMany({ name: /Test Event/ });
-    await Booking.deleteMany({});
+    await User.deleteMany({ email: /@bookingservicetest.com/ });
+    await Artist.deleteMany({ user: artistUser._id });
+    await Event.deleteMany({ organizer: organizerUser._id });
+    await Venue.deleteMany({ owner: organizerUser._id });
+    await Booking.deleteMany({ event: testEvent._id });
   });
 
   describe("createBooking", () => {
@@ -141,8 +177,8 @@ describe("Booking Service", () => {
       );
 
       expect(result).toBeDefined();
-      expect(result.artist.toString()).toBe(testArtist._id.toString());
-      expect(result.event.toString()).toBe(testEvent._id.toString());
+      expect(result.artist._id.toString()).toBe(testArtist._id.toString());
+      expect(result.event._id.toString()).toBe(testEvent._id.toString());
       expect(result.bookedBy.toString()).toBe(organizerUser._id.toString());
       expect(result.status).toBe(BookingStatus.PENDING);
       expect(result.payment.amount).toBe(800);
@@ -152,7 +188,7 @@ describe("Booking Service", () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
       const bookingData: CreateBookingInput = {
         artist: testArtist._id.toString(),
-        event: nonExistentId, // Non-existent event ID
+        event: nonExistentId,
         bookingDetails: {
           startTime: new Date(testEvent.date.start.getTime() + 60 * 60 * 1000),
           endTime: new Date(testEvent.date.start.getTime() + 3 * 60 * 60 * 1000),
@@ -172,7 +208,7 @@ describe("Booking Service", () => {
     it("should throw error if artist not found", async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
       const bookingData: CreateBookingInput = {
-        artist: nonExistentId, // Non-existent artist ID
+        artist: nonExistentId,
         event: testEvent._id.toString(),
         bookingDetails: {
           startTime: new Date(testEvent.date.start.getTime() + 60 * 60 * 1000),
@@ -214,7 +250,6 @@ describe("Booking Service", () => {
     });
 
     it("should throw error if there's a conflicting booking", async () => {
-      // Use the same time range as the existing booking
       const bookingData: CreateBookingInput = {
         artist: testArtist._id.toString(),
         event: testEvent._id.toString(),
@@ -288,7 +323,7 @@ describe("Booking Service", () => {
 
     it("should throw error if user is not authorized", async () => {
       const unauthorizedUser = await createTestUser({
-        email: `unauthorized${Date.now()}@bookingtest.com`,
+        email: `unauthorized${Date.now()}@bookingservicetest.com`,
         password: "Password123!",
         firstName: "Unauthorized",
         lastName: "User",
@@ -305,36 +340,58 @@ describe("Booking Service", () => {
     });
 
     it("should throw error if trying to update a canceled booking", async () => {
-      // First, cancel the booking
-      await bookingService.updateBookingStatus(
-        testBooking._id.toString(),
-        { _id: organizerUser._id.toString(), role: UserRole.ORGANIZER } as any,
-        BookingStatus.CANCELED
-      );
+      // Create a special booking with canceled status
+      const canceledBooking = await Booking.create({
+        artist: testArtist._id,
+        event: testEvent._id,
+        bookedBy: organizerUser._id,
+        bookingDetails: {
+          startTime: new Date(testEvent.date.start.getTime() + 120 * 60 * 1000),
+          endTime: new Date(testEvent.date.start.getTime() + 240 * 60 * 1000),
+          setDuration: 120,
+          specialRequirements: "Test requirements",
+        },
+        payment: {
+          amount: 500,
+          currency: "USD",
+          status: PaymentStatus.PENDING,
+        },
+        status: BookingStatus.CANCELED,
+      });
 
-      // Then try to update it again
       await expect(
         bookingService.updateBookingStatus(
-          testBooking._id.toString(),
-          { _id: organizerUser._id.toString(), role: UserRole.ORGANIZER } as any,
+          (canceledBooking as any)._id.toString(),
+          { _id: adminUser._id.toString(), role: UserRole.ADMIN } as any,
           BookingStatus.CONFIRMED
         )
       ).rejects.toThrow("Cannot update a canceled booking");
     });
 
     it("should throw error if trying to update a completed booking to non-canceled status", async () => {
-      // First, complete the booking
-      await bookingService.updateBookingStatus(
-        testBooking._id.toString(),
-        { _id: organizerUser._id.toString(), role: UserRole.ORGANIZER } as any,
-        BookingStatus.COMPLETED
-      );
+      // Create a special booking with completed status
+      const completedBooking = await Booking.create({
+        artist: testArtist._id,
+        event: testEvent._id,
+        bookedBy: organizerUser._id,
+        bookingDetails: {
+          startTime: new Date(testEvent.date.start.getTime() + 120 * 60 * 1000),
+          endTime: new Date(testEvent.date.start.getTime() + 240 * 60 * 1000),
+          setDuration: 120,
+          specialRequirements: "Test requirements",
+        },
+        payment: {
+          amount: 500,
+          currency: "USD",
+          status: PaymentStatus.PAID,
+        },
+        status: BookingStatus.COMPLETED,
+      });
 
-      // Then try to update it to confirmed
       await expect(
         bookingService.updateBookingStatus(
-          testBooking._id.toString(),
-          { _id: organizerUser._id.toString(), role: UserRole.ORGANIZER } as any,
+          (completedBooking as any)._id.toString(),
+          { _id: adminUser._id.toString(), role: UserRole.ADMIN } as any,
           BookingStatus.CONFIRMED
         )
       ).rejects.toThrow("Completed booking cannot be updated");
@@ -465,8 +522,10 @@ describe("Booking Service", () => {
 
       expect(Array.isArray(results)).toBe(true);
 
+      // Check that results contain at least one booking and all match the event
+      expect(results.length).toBeGreaterThan(0);
       const allForEvent = results.every(
-        booking => booking.event.toString() === testEvent._id.toString()
+        booking => booking.event._id.toString() === testEvent._id.toString()
       );
       expect(allForEvent).toBe(true);
     });
@@ -501,9 +560,10 @@ describe("Booking Service", () => {
       );
 
       expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
 
       const allForArtist = results.every(
-        booking => booking.artist.toString() === testArtist._id.toString()
+        booking => booking.artist._id.toString() === testArtist._id.toString()
       );
       expect(allForArtist).toBe(true);
     });
@@ -516,9 +576,10 @@ describe("Booking Service", () => {
       );
 
       expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
 
       const allForEvent = results.every(
-        booking => booking.event.toString() === testEvent._id.toString()
+        booking => booking.event._id.toString() === testEvent._id.toString()
       );
       expect(allForEvent).toBe(true);
     });

@@ -37,7 +37,7 @@ describe("Booking Controller", () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany({ email: /@bookingtest.com/ });
+    await User.deleteMany({ email: /@bookingcontrollertest.com/ });
     await Artist.deleteMany({ user: artistUser._id });
     await Venue.deleteMany({ owner: organizerUser._id });
     await Event.deleteMany({ organizer: organizerUser._id });
@@ -48,7 +48,7 @@ describe("Booking Controller", () => {
   beforeEach(async () => {
     // Create test users
     artistUser = await createTestUser({
-      email: `artist${Date.now()}@bookingtest.com`,
+      email: `artist${Date.now()}@bookingcontrollertest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Artist",
@@ -56,7 +56,7 @@ describe("Booking Controller", () => {
     });
 
     organizerUser = await createTestUser({
-      email: `organizer${Date.now()}@bookingtest.com`,
+      email: `organizer${Date.now()}@bookingcontrollertest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Organizer",
@@ -64,7 +64,7 @@ describe("Booking Controller", () => {
     });
 
     adminUser = await createTestUser({
-      email: `admin${Date.now()}@bookingtest.com`,
+      email: `admin${Date.now()}@bookingcontrollertest.com`,
       password: "Password123!",
       firstName: "Test",
       lastName: "Admin",
@@ -142,7 +142,7 @@ describe("Booking Controller", () => {
   });
 
   afterEach(async () => {
-    await User.deleteMany({ email: /@bookingtest.com/ });
+    await User.deleteMany({ email: /@bookingcontrollertest.com/ });
     await Artist.deleteMany({ user: artistUser._id });
     await Venue.deleteMany({ owner: organizerUser._id });
     await Event.deleteMany({ organizer: organizerUser._id });

@@ -31,7 +31,7 @@ describe("Artist Controller", () => {
 
   afterAll(async () => {
     await User.deleteMany({ email: /@artisttest.com/ });
-    await Artist.deleteMany({});
+    await Artist.deleteMany({ user: artistUser._id });
     await closeDatabase();
   });
 
@@ -53,7 +53,7 @@ describe("Artist Controller", () => {
 
   afterEach(async () => {
     await User.deleteMany({ email: /@artisttest.com/ });
-    await Artist.deleteMany({});
+    await Artist.deleteMany({ user: artistUser._id });
   });
 
   describe("POST /artists/profile", () => {
@@ -247,6 +247,19 @@ describe("Artist Controller", () => {
           },
           rating: 4.8,
         },
+        {
+          user: new mongoose.Types.ObjectId(),
+          artistName: "Jazz Ensemble",
+          genres: [MusicGenre.JAZZ],
+          bio: "Jazz ensemble bio",
+          location: "New Orleans",
+          rate: {
+            amount: 300,
+            currency: "USD",
+            per: "hour",
+          },
+          rating: 4.2,
+        },
       ];
 
       await Artist.insertMany(artists);
@@ -331,6 +344,11 @@ describe("Artist Controller", () => {
       // Should be different artists
       expect(page1Response.body.data[0]._id).not.toBe(
         page2Response.body.data[0]._id
+      );
+
+      // Additional check to confirm different artists by name
+      expect(page1Response.body.data[0].artistName).not.toBe(
+        page2Response.body.data[0].artistName
       );
     });
   });
