@@ -105,6 +105,10 @@ export const getBookingsValidator = [
     .optional()
     .isMongoId()
     .withMessage('Invalid event ID format'),
+  query('artistId')
+    .optional()
+    .isMongoId()
+    .withMessage('Invalid artist ID format'),
   query('page')
     .optional()
     .isInt({ min: 1 })

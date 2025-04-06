@@ -16,6 +16,16 @@ router.post(
   bookingController.createBooking.bind(bookingController)
 );
 
+// Admin endpoint to get all bookings
+router.get(
+  '/',
+  protect,
+  restrictTo('admin'),
+  getBookingsValidator,
+  validationMiddleware,
+  bookingController.getAllBookings.bind(bookingController)
+);
+
 router.get(
   '/:id',
   protect,

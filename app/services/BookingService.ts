@@ -275,6 +275,61 @@ export class BookingService {
 
     return bookings;
   }
+
+  /**
+   * Get all bookings in the system (admin only)
+   * @param filters - Filters for bookings
+   * @param page - Page number for pagination
+   * @param limit - Number of results per page
+   */
+  async getAllBookings(
+    filters: any,
+    page = 1,
+    limit = 10
+  ): Promise<IBooking[]> {
+    const query: any = {};
+
+    // Apply status filter
+    if (filters.status) {
+      query.status = filters.status;
+    }
+
+    // Apply date filters
+    if (filters.startDate || filters.endDate) {
+      query.bookingDetails = query.bookingDetails || {};
+
+      if (filters.startDate) {
+        query["bookingDetails.startTime"] = {
+          $gte: new Date(filters.startDate),
+        };
+      }
+
+      if (filters.endDate) {
+        query["bookingDetails.endTime"] = { $lte: new Date(filters.endDate) };
+      }
+    }
+
+    // Filter by event
+    if (filters.eventId) {
+      query.event = filters.eventId;
+    }
+
+    // Filter by artist
+    if (filters.artistId) {
+      query.artist = filters.artistId;
+    }
+
+    const skip = (page - 1) * limit;
+    const bookings = await Booking.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("event", "name date venue")
+      .populate("artist", "artistName genres rate")
+      .populate("bookedBy", "firstName lastName email");
+
+    return bookings;
+  }
 }
 
 export default BookingService;

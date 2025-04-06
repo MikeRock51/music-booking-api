@@ -269,6 +269,43 @@ class BookingController {
       next(error);
     }
   }
+
+  /**
+   * Get all bookings (admin only)
+   */
+  async getAllBookings(req: Request, res: Response, next: NextFunction) {
+    try {
+      const {
+        status,
+        startDate,
+        endDate,
+        eventId,
+        artistId,
+        page = 1,
+        limit = 10
+      } = req.query;
+
+      const filters: any = {};
+      if (status) filters.status = status;
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      if (eventId) filters.eventId = eventId;
+      if (artistId) filters.artistId = artistId;
+
+      const bookings = await this.bookingService.getAllBookings(
+        filters,
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        success: true,
+        data: bookings,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default BookingController;
