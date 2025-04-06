@@ -1,7 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import EventService from '../services/EventService';
 
-class EventControllerClass {
+class EventController {
+  private eventService: EventService;
+
+  constructor() {
+    this.eventService = new EventService();
+  }
+
   /**
    * Create a new event
    */
@@ -10,7 +16,7 @@ class EventControllerClass {
       const organizerId = req.user._id;
       const eventData = req.body;
 
-      const event = await EventService.createEvent(organizerId, eventData);
+      const event = await this.eventService.createEvent(organizerId, eventData);
 
       res.status(201).json({
         success: true,
@@ -29,7 +35,7 @@ class EventControllerClass {
     try {
       const { id } = req.params;
 
-      const event = await EventService.getEventById(id);
+      const event = await this.eventService.getEventById(id);
 
       res.status(200).json({
         success: true,
@@ -49,7 +55,7 @@ class EventControllerClass {
       const organizer = req.user;
       const updateData = req.body;
 
-      const updatedEvent = await EventService.updateEvent(id, organizer, updateData);
+      const updatedEvent = await this.eventService.updateEvent(id, organizer, updateData);
 
       res.status(200).json({
         success: true,
@@ -69,7 +75,7 @@ class EventControllerClass {
       const { id } = req.params;
       const organizerId = req.user._id;
 
-      const publishedEvent = await EventService.publishEvent(id, organizerId);
+      const publishedEvent = await this.eventService.publishEvent(id, organizerId);
 
       res.status(200).json({
         success: true,
@@ -89,7 +95,7 @@ class EventControllerClass {
       const { id } = req.params;
       const organizerId = req.user._id;
 
-      const canceledEvent = await EventService.cancelEvent(id, organizerId);
+      const canceledEvent = await this.eventService.cancelEvent(id, organizerId);
 
       res.status(200).json({
         success: true,
@@ -109,7 +115,7 @@ class EventControllerClass {
       const organizerId = req.user._id;
       const { page = 1, limit = 10 } = req.query;
 
-      const events = await EventService.getOrganizerEvents(
+      const events = await this.eventService.getOrganizerEvents(
         organizerId,
         Number(page),
         Number(limit)
@@ -153,7 +159,7 @@ class EventControllerClass {
       if (maxPrice) filters.maxPrice = maxPrice;
       if (artistId) filters.artistId = artistId;
 
-      const events = await EventService.findEvents(
+      const events = await this.eventService.findEvents(
         filters,
         Number(page),
         Number(limit)
@@ -169,4 +175,4 @@ class EventControllerClass {
   }
 }
 
-export const EventController = new EventControllerClass();
+export default EventController;

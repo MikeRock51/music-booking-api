@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { VenueController } from '../../controllers/VenueController';
+import VenueController from '../../controllers/VenueController';
 import { createVenueValidator, updateVenueValidator, venueIdValidator, searchVenuesValidator } from '../../validators/venueValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
@@ -7,6 +7,7 @@ import { upload } from '../../config/upload';
 import { AppError, handleMultipartBoundryError } from '../../middleware/errorHandler';
 
 const router = Router();
+const venueController = new VenueController();
 
 router.post(
   '/',
@@ -14,27 +15,27 @@ router.post(
   restrictTo('organizer', 'admin'),
   createVenueValidator,
   validationMiddleware,
-  VenueController.createVenue
+  venueController.createVenue.bind(venueController)
 );
 
 router.get(
   '/',
   searchVenuesValidator,
   validationMiddleware,
-  VenueController.findVenues
+  venueController.findVenues.bind(venueController)
 );
 
 router.get(
   '/my-venues',
   protect,
-  VenueController.getMyVenues
+  venueController.getMyVenues.bind(venueController)
 );
 
 router.get(
   '/:id',
   venueIdValidator,
   validationMiddleware,
-  VenueController.getVenueById
+  venueController.getVenueById.bind(venueController)
 );
 
 router.put(
@@ -42,7 +43,7 @@ router.put(
   protect,
   updateVenueValidator,
   validationMiddleware,
-  VenueController.updateVenue
+  venueController.updateVenue.bind(venueController)
 );
 
 router.delete(
@@ -50,7 +51,7 @@ router.delete(
   protect,
   venueIdValidator,
   validationMiddleware,
-  VenueController.deleteVenue
+  venueController.deleteVenue.bind(venueController)
 );
 
 router.post(
@@ -60,7 +61,7 @@ router.post(
   handleMultipartBoundryError,
   upload.array('images', 10),
   validationMiddleware,
-  VenueController.uploadVenueImages
+  venueController.uploadVenueImages.bind(venueController)
 );
 
 router.patch(
@@ -69,7 +70,7 @@ router.patch(
   restrictTo('admin'),
   venueIdValidator,
   validationMiddleware,
-  VenueController.verifyVenue
+  venueController.verifyVenue.bind(venueController)
 );
 
 export default router;

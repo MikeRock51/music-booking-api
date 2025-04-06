@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { BookingController } from '../../controllers/BookingController';
+import BookingController from '../../controllers/BookingController';
 import { createBookingValidator, bookingIdValidator, updateBookingStatusValidator, updatePaymentStatusValidator, getBookingsValidator } from '../../validators/bookingValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
 
 const router = Router();
+const bookingController = new BookingController();
 
 router.post(
   '/',
@@ -12,7 +13,7 @@ router.post(
   restrictTo('organizer', 'admin'),
   createBookingValidator,
   validationMiddleware,
-  BookingController.createBooking
+  bookingController.createBooking.bind(bookingController)
 );
 
 router.get(
@@ -20,7 +21,7 @@ router.get(
   protect,
   bookingIdValidator,
   validationMiddleware,
-  BookingController.getBookingById
+  bookingController.getBookingById.bind(bookingController)
 );
 
 // Artist bookings
@@ -30,7 +31,7 @@ router.get(
   restrictTo('artist'),
   getBookingsValidator,
   validationMiddleware,
-  BookingController.getArtistBookings
+  bookingController.getArtistBookings.bind(bookingController)
 );
 
 // Organizer bookings
@@ -40,7 +41,7 @@ router.get(
   restrictTo('organizer', 'admin'),
   getBookingsValidator,
   validationMiddleware,
-  BookingController.getOrganizerBookings
+  bookingController.getOrganizerBookings.bind(bookingController)
 );
 
 // Booking status updates
@@ -50,7 +51,7 @@ router.patch(
   bookingIdValidator,
   updateBookingStatusValidator,
   validationMiddleware,
-  BookingController.updateBookingStatus
+  bookingController.updateBookingStatus.bind(bookingController)
 );
 
 router.patch(
@@ -60,7 +61,7 @@ router.patch(
   bookingIdValidator,
   updatePaymentStatusValidator,
   validationMiddleware,
-  BookingController.updatePaymentStatus
+  bookingController.updatePaymentStatus.bind(bookingController)
 );
 
 // Quick actions for bookings
@@ -70,7 +71,7 @@ router.patch(
   restrictTo('artist'),
   bookingIdValidator,
   validationMiddleware,
-  BookingController.confirmBooking
+  bookingController.confirmBooking.bind(bookingController)
 );
 
 router.patch(
@@ -79,7 +80,7 @@ router.patch(
   restrictTo('artist'),
   bookingIdValidator,
   validationMiddleware,
-  BookingController.rejectBooking
+  bookingController.rejectBooking.bind(bookingController)
 );
 
 router.patch(
@@ -87,7 +88,7 @@ router.patch(
   protect,
   bookingIdValidator,
   validationMiddleware,
-  BookingController.cancelBooking
+  bookingController.cancelBooking.bind(bookingController)
 );
 
 router.patch(
@@ -96,7 +97,7 @@ router.patch(
   restrictTo('organizer', 'admin'),
   bookingIdValidator,
   validationMiddleware,
-  BookingController.completeBooking
+  bookingController.completeBooking.bind(bookingController)
 );
 
 export default router;

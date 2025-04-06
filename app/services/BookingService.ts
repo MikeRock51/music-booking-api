@@ -4,7 +4,7 @@ import Artist from '../models/Artist';
 import { AppError } from '../middleware/errorHandler';
 import { CreateBookingInput } from '../interfaces/booking.interface';
 
-class BookingService {
+export class BookingService {
   /**
    * Create a new booking
    * @param userId - User ID making the booking
@@ -251,4 +251,4 @@ class BookingService {
   }
 }
 
-export default new BookingService();
+export default BookingService;

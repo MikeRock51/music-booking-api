@@ -81,7 +81,7 @@ class ArtistService {
     artistId: string,
     updateData: any
   ): Promise<IArtist> {
-    
+
     const artist = await Artist.findOneAndUpdate(
       { user: artistId },
       { ...updateData },
@@ -178,4 +178,4 @@ class ArtistService {
   }
 }
 
-export default new ArtistService();
+export default ArtistService;

@@ -3,7 +3,13 @@ import ArtistService from "../services/ArtistService";
 import { ArtistProfileInput } from "../interfaces/artist.interface";
 import { AppError } from "../middleware/errorHandler";
 
-class ArtistControllerClass {
+class ArtistController {
+  private artistService: ArtistService;
+
+  constructor() {
+    this.artistService = new ArtistService();
+  }
+
   /**
    * Create artist profile for the logged-in user
    */
@@ -12,7 +18,7 @@ class ArtistControllerClass {
       const userId = req.user._id;
       const artistData: ArtistProfileInput = req.body;
 
-      const artist = await ArtistService.createArtistProfile(
+      const artist = await this.artistService.createArtistProfile(
         userId,
         artistData
       );
@@ -34,7 +40,7 @@ class ArtistControllerClass {
     try {
       const { id } = req.params;
 
-      const artist = await ArtistService.getArtistById(id);
+      const artist = await this.artistService.getArtistById(id);
 
       res.status(200).json({
         success: true,
@@ -52,7 +58,7 @@ class ArtistControllerClass {
     try {
       const userId = req.user._id;
 
-      const artist = await ArtistService.getArtistByUserId(userId);
+      const artist = await this.artistService.getArtistByUserId(userId);
 
       res.status(200).json({
         success: true,
@@ -71,7 +77,7 @@ class ArtistControllerClass {
       const userId = req.user._id;
       const updateData = req.body;
 
-      const updatedArtist = await ArtistService.updateArtistProfile(
+      const updatedArtist = await this.artistService.updateArtistProfile(
         userId,
         updateData
       );
@@ -112,7 +118,7 @@ class ArtistControllerClass {
       if (maxRate) filters.maxRate = Number(maxRate);
       if (minRating) filters.minRating = Number(minRating);
 
-      const result = await ArtistService.findArtists(
+      const result = await this.artistService.findArtists(
         filters,
         Number(page),
         Number(limit)
@@ -145,7 +151,7 @@ class ArtistControllerClass {
         throw new AppError("No images uploaded", 400);
       }
 
-      const imageUrls = await ArtistService.uploadPortfolioImages(
+      const imageUrls = await this.artistService.uploadPortfolioImages(
         userId,
         files
       );
@@ -163,4 +169,4 @@ class ArtistControllerClass {
   }
 }
 
-export const ArtistController = new ArtistControllerClass();
+export default ArtistController;

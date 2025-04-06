@@ -2,7 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import AuthService from '../services/AuthService';
 import { LoginCredentials, RegisterUserInput, UpgradeUserInput } from '../interfaces/auth.interface';
 
-class AuthControllerClass {
+class AuthController {
+  private authService: AuthService;
+
+  constructor() {
+    this.authService = new AuthService();
+  }
+
   /**
    * Register a new user
    */
@@ -10,7 +16,7 @@ class AuthControllerClass {
     try {
       const registrationData: RegisterUserInput = req.body;
 
-      const result = await AuthService.register(registrationData);
+      const result = await this.authService.register(registrationData);
 
       res.status(201).json({
         success: true,
@@ -28,7 +34,7 @@ class AuthControllerClass {
     try {
       const loginCredentials: LoginCredentials = req.body;
 
-      const result = await AuthService.login(loginCredentials);
+      const result = await this.authService.login(loginCredentials);
 
       res.status(200).json({
         success: true,
@@ -63,7 +69,7 @@ class AuthControllerClass {
     try {
       const upgradeInput: UpgradeUserInput = req.body;
 
-      const updatedUser = await AuthService.upgradeTo(upgradeInput);
+      const updatedUser = await this.authService.upgradeTo(upgradeInput);
 
       res.status(200).json({
         success: true,
@@ -82,4 +88,4 @@ class AuthControllerClass {
   }
 }
 
-export const AuthController = new AuthControllerClass();
+export default AuthController;

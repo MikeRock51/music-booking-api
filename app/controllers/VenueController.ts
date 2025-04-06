@@ -3,7 +3,13 @@ import VenueService from '../services/VenueService';
 import { CreateVenueInput, UpdateVenueInput } from '../interfaces/venue.interface';
 import { AppError } from '../middleware/errorHandler';
 
-class VenueControllerClass {
+class VenueController {
+  private venueService: VenueService;
+
+  constructor() {
+    this.venueService = new VenueService();
+  }
+
   /**
    * Create a new venue
    */
@@ -12,7 +18,7 @@ class VenueControllerClass {
       const userId = req.user._id;
       const venueData: CreateVenueInput = req.body;
 
-      const venue = await VenueService.createVenue(userId, venueData);
+      const venue = await this.venueService.createVenue(userId, venueData);
 
       res.status(201).json({
         success: true,
@@ -31,7 +37,7 @@ class VenueControllerClass {
     try {
       const { id } = req.params;
 
-      const venue = await VenueService.getVenueById(id);
+      const venue = await this.venueService.getVenueById(id);
 
       res.status(200).json({
         success: true,
@@ -51,7 +57,7 @@ class VenueControllerClass {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      const venues = await VenueService.getUserVenues(userId, page, limit);
+      const venues = await this.venueService.getUserVenues(userId, page, limit);
 
       res.status(200).json({
         success: true,
@@ -71,7 +77,7 @@ class VenueControllerClass {
       const userId = req.user._id;
       const venueData: UpdateVenueInput = req.body;
 
-      const venue = await VenueService.updateVenue(id, userId, venueData);
+      const venue = await this.venueService.updateVenue(id, userId, venueData);
 
       res.status(200).json({
         success: true,
@@ -91,7 +97,7 @@ class VenueControllerClass {
       const { id } = req.params;
       const userId = req.user._id;
 
-      await VenueService.deleteVenue(id, userId);
+      await this.venueService.deleteVenue(id, userId);
 
       res.status(200).json({
         success: true,
@@ -130,7 +136,7 @@ class VenueControllerClass {
       if (maxCapacity) filters.maxCapacity = parseInt(maxCapacity as string);
       if (isVerified !== undefined) filters.isVerified = isVerified === 'true';
 
-      const result = await VenueService.findVenues(
+      const result = await this.venueService.findVenues(
         filters,
         parseInt(page as string),
         parseInt(limit as string)
@@ -157,7 +163,7 @@ class VenueControllerClass {
         throw new AppError('No images uploaded', 400);
       }
 
-      const imageUrls = await VenueService.uploadVenueImages(id, userId, req.files);
+      const imageUrls = await this.venueService.uploadVenueImages(id, userId, req.files);
 
       res.status(200).json({
         success: true,
@@ -176,7 +182,7 @@ class VenueControllerClass {
     try {
       const { id } = req.params;
 
-      const venue = await VenueService.verifyVenue(id);
+      const venue = await this.venueService.verifyVenue(id);
 
       res.status(200).json({
         success: true,
@@ -189,4 +195,4 @@ class VenueControllerClass {
   }
 }
 
-export const VenueController = new VenueControllerClass();
+export default VenueController;

@@ -1,29 +1,30 @@
 import { Router } from 'express';
-import { AuthController } from '../../controllers/AuthController';
+import AuthController from '../../controllers/AuthController';
 import { registerValidator, loginValidator, upgradeToAdminValidator, upgradeToOrganizerValidator } from '../../validators/authValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
 
 const router = Router();
+const authController = new AuthController();
 
 router.post(
   '/register',
   registerValidator,
   validationMiddleware,
-  AuthController.register
+  authController.register.bind(authController)
 );
 
 router.post(
   '/login',
   loginValidator,
   validationMiddleware,
-  AuthController.login
+  authController.login.bind(authController)
 );
 
 router.get(
   '/me',
   protect,
-  AuthController.getProfile
+  authController.getProfile.bind(authController)
 );
 
 router.post(
@@ -32,7 +33,7 @@ router.post(
   restrictTo('admin'),
   upgradeToAdminValidator,
   validationMiddleware,
-  AuthController.upgradeTo
+  authController.upgradeTo.bind(authController)
 );
 
 export default router;

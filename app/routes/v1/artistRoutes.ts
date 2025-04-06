@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ArtistController } from '../../controllers/ArtistController';
+import ArtistController from '../../controllers/ArtistController';
 import { artistProfileValidator, updateArtistProfileValidator } from '../../validators/artistValidator';
 import { protect, restrictTo } from '../../middleware/auth';
 import { validationMiddleware } from '../../middleware/validator';
@@ -7,19 +7,20 @@ import { upload } from '../../config/upload';
 import { AppError, handleMultipartBoundryError } from '../../middleware/errorHandler';
 
 const router = Router();
+const artistController = new ArtistController();
 
 router.post(
   '/profile',
   protect,
   artistProfileValidator,
   validationMiddleware,
-  ArtistController.createProfile
+  artistController.createProfile.bind(artistController)
 );
 
 router.get(
   '/profile',
   protect,
-  ArtistController.getMyArtistProfile
+  artistController.getMyArtistProfile.bind(artistController)
 );
 
 router.put(
@@ -28,7 +29,7 @@ router.put(
   restrictTo('artist'),
   updateArtistProfileValidator,
   validationMiddleware,
-  ArtistController.updateMyProfile
+  artistController.updateMyProfile.bind(artistController)
 );
 
 router.post(
@@ -37,17 +38,17 @@ router.post(
   restrictTo('artist'),
   handleMultipartBoundryError,
   upload.array('images', 10),
-  ArtistController.uploadPortfolioImages
+  artistController.uploadPortfolioImages.bind(artistController)
 );
 
 router.get(
   '/',
-  ArtistController.findArtists
+  artistController.findArtists.bind(artistController)
 );
 
 router.get(
   '/:id',
-  ArtistController.getArtistById
+  artistController.getArtistById.bind(artistController)
 );
 
 export default router;
