@@ -308,11 +308,7 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: {
-          results: bookings,
-          page: Number(page),
-          limit: Number(limit)
-        },
+        data: bookings,
       });
     } catch (error) {
       next(error);

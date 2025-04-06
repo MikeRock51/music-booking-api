@@ -26,7 +26,6 @@ router.get(
   bookingController.getAllBookings.bind(bookingController)
 );
 
-// Artist bookings - moved before /:id route
 router.get(
   '/artist',
   protect,
@@ -36,7 +35,6 @@ router.get(
   bookingController.getArtistBookings.bind(bookingController)
 );
 
-// Organizer bookings - moved before /:id route
 router.get(
   '/organizer',
   protect,
@@ -46,7 +44,6 @@ router.get(
   bookingController.getOrganizerBookings.bind(bookingController)
 );
 
-// The /:id route should come after all specific routes
 router.get(
   '/:id',
   protect,

@@ -1002,6 +1002,51 @@
 					"response": []
 				},
 				{
+					"name": "Get All Bookings (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bookings?status=confirmed&startDate=2023-07-01&endDate=2023-12-31&page=1&limit=20",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "all"
+								},
+								{
+									"key": "startDate",
+									"value": "2023-07-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2023-12-31"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get all bookings in the system (admin only)"
+					},
+					"response": []
+				},
+				{
 					"name": "Update Booking Status",
 					"request": {
 						"method": "PATCH",

@@ -75,6 +75,7 @@ A comprehensive RESTful API for a Music Booking platform that handles artist pro
 ### Bookings
 
 - `POST /bookings` - Create a booking request
+- `GET /bookings` - Get all bookings (admin only)
 - `GET /bookings/:id` - Get booking details
 - `GET /bookings/artist` - Get artist's bookings
 - `GET /bookings/organizer` - Get organizer's bookings

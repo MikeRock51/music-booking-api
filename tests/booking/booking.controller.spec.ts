@@ -387,7 +387,7 @@ describe("Booking Controller", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data.results)).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     it("should filter all bookings by status", async () => {
@@ -398,7 +398,7 @@ describe("Booking Controller", () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
-      const allPending = response.body.data.results.every(
+      const allPending = response.body.data.every(
         (booking: any) => booking.status === BookingStatus.PENDING
       );
       expect(allPending).toBe(true);
