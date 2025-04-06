@@ -26,15 +26,7 @@ router.get(
   bookingController.getAllBookings.bind(bookingController)
 );
 
-router.get(
-  '/:id',
-  protect,
-  bookingIdValidator,
-  validationMiddleware,
-  bookingController.getBookingById.bind(bookingController)
-);
-
-// Artist bookings
+// Artist bookings - moved before /:id route
 router.get(
   '/artist',
   protect,
@@ -44,7 +36,7 @@ router.get(
   bookingController.getArtistBookings.bind(bookingController)
 );
 
-// Organizer bookings
+// Organizer bookings - moved before /:id route
 router.get(
   '/organizer',
   protect,
@@ -52,6 +44,15 @@ router.get(
   getBookingsValidator,
   validationMiddleware,
   bookingController.getOrganizerBookings.bind(bookingController)
+);
+
+// The /:id route should come after all specific routes
+router.get(
+  '/:id',
+  protect,
+  bookingIdValidator,
+  validationMiddleware,
+  bookingController.getBookingById.bind(bookingController)
 );
 
 // Booking status updates

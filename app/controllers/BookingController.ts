@@ -130,7 +130,11 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: bookings,
+        data: {
+          results: bookings,
+          page: Number(page),
+          limit: Number(limit)
+        },
       });
     } catch (error) {
       next(error);
@@ -167,7 +171,11 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: bookings,
+        data: {
+          results: bookings,
+          page: Number(page),
+          limit: Number(limit)
+        },
       });
     } catch (error) {
       next(error);
@@ -300,7 +308,11 @@ class BookingController {
 
       res.status(200).json({
         success: true,
-        data: bookings,
+        data: {
+          results: bookings,
+          page: Number(page),
+          limit: Number(limit)
+        },
       });
     } catch (error) {
       next(error);

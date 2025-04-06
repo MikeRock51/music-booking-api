@@ -151,12 +151,31 @@ describe("Booking Controller", () => {
 
   describe("POST /bookings", () => {
     it("should create a new booking when authenticated as organizer", async () => {
+      // Create a different event with a different date to avoid booking conflicts
+      const differentEvent = await Event.create({
+        name: "Test Event 2",
+        description: "A second test event for non-conflicting booking",
+        date: {
+          start: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 2 weeks in future
+          end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // 3 hours after start
+        },
+        venue: testVenue._id,
+        location: "Test Location",
+        organizer: organizerUser._id,
+        eventType: "concert",
+        ticketInfo: {
+          totalTickets: 100,
+          price: 50,
+        },
+        status: EventStatus.PUBLISHED,
+      }) as any; // Type assertion to handle the _id property
+
       const bookingData = {
         artist: testArtist._id.toString(),
-        event: testEvent._id.toString(),
+        event: differentEvent._id.toString(),
         bookingDetails: {
-          startTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-          endTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+          startTime: differentEvent.date.start,
+          endTime: differentEvent.date.end,
           setDuration: 180,
           specialRequirements: "New testing requirements",
         },
@@ -175,10 +194,13 @@ describe("Booking Controller", () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe("Booking created successfully");
-      expect(response.body.data).toHaveProperty("artist", testArtist._id.toString());
-      expect(response.body.data).toHaveProperty("event", testEvent._id.toString());
+      expect(response.body.data).toHaveProperty("artist._id", testArtist._id.toString());
+      expect(response.body.data).toHaveProperty("event._id", differentEvent._id.toString());
       expect(response.body.data).toHaveProperty("status", BookingStatus.PENDING);
       expect(response.body.data.payment).toHaveProperty("amount", 800);
+
+      // Clean up the additional event
+      await Event.deleteMany({ _id: differentEvent._id });
     });
 
     it("should return 401 when not authenticated", async () => {
