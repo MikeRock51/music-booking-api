@@ -4,7 +4,7 @@ services:
     container_name: music-booking-api
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - DB_URI=${DB_URI:-mongodb://mongodb:27017/music-booking}
