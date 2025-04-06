@@ -29,8 +29,8 @@ describe('AuthService', () => {
 
   afterEach(async () => {
     // Clean up test data after each test
-    await User.deleteMany({});
-    await Artist.deleteMany({});
+    await User.deleteMany({ email: /@serviceexample.com/ });
+    await Artist.deleteMany({ email: /@serviceexample.com/ });
   });
 
   describe('register method', () => {
