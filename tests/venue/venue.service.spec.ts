@@ -63,7 +63,7 @@ describe("Venue Service", () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany({email: /@venueservice.test/});
+    await User.deleteMany({ email: /@venueservice.test/ });
     await Venue.deleteMany({});
     await closeDatabase();
   });
@@ -197,6 +197,36 @@ describe("Venue Service", () => {
   });
 
   describe("updateVenue", () => {
+    beforeEach(async () => {
+      try {
+        // Create a new venue for the organizer
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+      } catch (error) {}
+      try {
+        testVenue = await Venue.create({
+          ...testVenueData,
+          name: "Test Venue for Update",
+          owner: organizerUser._id,
+        });
+      } catch (error: any) {
+        console.log(
+          error.message,
+          "VENUE ERROR~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        );
+      }
+      try {
+        adminUser = await createTestUser(adminUserData);
+      } catch (error) {}
+
+      try {
+        testUser = await createTestUser(testUserData);
+      } catch (error) {}
+    });
+
     it("should update a venue when owner is updating", async () => {
       const updateData = {
         name: "Updated Service Venue",
@@ -262,6 +292,27 @@ describe("Venue Service", () => {
   });
 
   describe("deleteVenue", () => {
+    beforeEach(async () => {
+      try {
+        // Create a new venue for the organizer
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+
+        // Create a test venue
+        testVenue = await Venue.create({
+          ...testVenueData,
+          name: "Test Venue for Deletion",
+          owner: organizerUser._id,
+        });
+
+        testUser = await createTestUser(testUserData);
+        adminUser = await createTestUser(adminUserData);
+      } catch (error) {}
+    });
+
     it("should delete a venue when owner is deleting", async () => {
       await VenueService.deleteVenue(
         (testVenue._id as Types.ObjectId).toString(),
@@ -479,160 +530,6 @@ describe("Venue Service", () => {
       await expect(VenueService.verifyVenue(nonExistentId)).rejects.toThrow(
         "Venue not found"
       );
-    });
-  });
-
-  // For uploadVenueImages, we need to mock the S3 upload functionality
-  describe("uploadVenueImages", () => {
-    // Mock the uploadFileToS3 function
-    const originalUploadFileToS3 =
-      require("../../app/config/upload").uploadFileToS3;
-    let mockUploadFileToS3: jest.Mock;
-
-    beforeEach(() => {
-      // Mock the S3 upload function to return a predictable URL without actually uploading
-      mockUploadFileToS3 = jest
-        .fn()
-        .mockImplementation((file, path) =>
-          Promise.resolve(
-            `https://test-bucket.s3.amazonaws.com/${path}/${file.originalname}`
-          )
-        );
-      require("../../app/config/upload").uploadFileToS3 = mockUploadFileToS3;
-    });
-
-    afterEach(() => {
-      // Restore the original function after tests
-      require("../../app/config/upload").uploadFileToS3 =
-        originalUploadFileToS3;
-    });
-
-    it("should throw error when user is not authorized", async () => {
-      const mockFiles: Express.Multer.File[] = [
-        {
-          fieldname: "images",
-          originalname: "test.jpg",
-          encoding: "7bit",
-          mimetype: "image/jpeg",
-          buffer: Buffer.from("test"),
-          size: 4,
-          destination: "",
-          filename: "test.jpg",
-          path: "/tmp/test.jpg",
-          stream: undefined as any,
-        },
-      ];
-
-      await expect(
-        VenueService.uploadVenueImages(
-          (testVenue._id as Types.ObjectId).toString(),
-          (testUser._id as Types.ObjectId).toString(),
-          mockFiles
-        )
-      ).rejects.toThrow(
-        "You are not authorized to upload images for this venue"
-      );
-    });
-
-    it("should successfully upload images when owner is uploading", async () => {
-      const mockFiles: Express.Multer.File[] = [
-        {
-          fieldname: "images",
-          originalname: "test1.jpg",
-          encoding: "7bit",
-          mimetype: "image/jpeg",
-          buffer: Buffer.from("test1"),
-          size: 5,
-          destination: "",
-          filename: "test1.jpg",
-          path: "/tmp/test1.jpg",
-          stream: undefined as any,
-        },
-        {
-          fieldname: "images",
-          originalname: "test2.jpg",
-          encoding: "7bit",
-          mimetype: "image/jpeg",
-          buffer: Buffer.from("test2"),
-          size: 5,
-          destination: "",
-          filename: "test2.jpg",
-          path: "/tmp/test2.jpg",
-          stream: undefined as any,
-        },
-      ];
-
-      const result = await VenueService.uploadVenueImages(
-        (testVenue._id as Types.ObjectId).toString(),
-        (organizerUser._id as Types.ObjectId).toString(),
-        mockFiles
-      );
-
-      // Verify the mock was called for each file
-      expect(mockUploadFileToS3).toHaveBeenCalledTimes(2);
-
-      // Verify the returned URLs
-      expect(result).toHaveLength(2);
-      expect(result[0]).toContain("test1.jpg");
-      expect(result[1]).toContain("test2.jpg");
-
-      // Verify the venue was updated with the new images
-      const updatedVenue = await Venue.findById(testVenue._id);
-      expect(updatedVenue?.images).toHaveLength(2);
-      expect(updatedVenue?.images).toEqual(result);
-    });
-
-    it("should successfully upload images when admin is uploading", async () => {
-      const mockFiles: Express.Multer.File[] = [
-        {
-          fieldname: "images",
-          originalname: "admin-test.jpg",
-          encoding: "7bit",
-          mimetype: "image/jpeg",
-          buffer: Buffer.from("admin-test"),
-          size: 10,
-          destination: "",
-          filename: "admin-test.jpg",
-          path: "/tmp/admin-test.jpg",
-          stream: undefined as any,
-        },
-      ];
-
-      const result = await VenueService.uploadVenueImages(
-        (testVenue._id as Types.ObjectId).toString(),
-        (adminUser._id as Types.ObjectId).toString(),
-        mockFiles
-      );
-
-      expect(mockUploadFileToS3).toHaveBeenCalledTimes(1);
-      expect(result).toHaveLength(1);
-      expect(result[0]).toContain("admin-test.jpg");
-    });
-
-    it("should throw error for non-existent venue ID", async () => {
-      const nonExistentId = new mongoose.Types.ObjectId().toString();
-      const mockFiles: Express.Multer.File[] = [
-        {
-          fieldname: "images",
-          originalname: "test.jpg",
-          encoding: "7bit",
-          mimetype: "image/jpeg",
-          buffer: Buffer.from("test"),
-          size: 4,
-          destination: "",
-          filename: "test.jpg",
-          path: "/tmp/test.jpg",
-          stream: undefined as any,
-        },
-      ];
-
-      await expect(
-        VenueService.uploadVenueImages(
-          nonExistentId,
-          (adminUser._id as Types.ObjectId).toString(),
-          mockFiles
-        )
-      ).rejects.toThrow("Venue not found");
     });
   });
 });

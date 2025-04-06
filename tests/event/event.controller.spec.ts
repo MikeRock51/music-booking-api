@@ -35,13 +35,31 @@ describe("Event Controller", () => {
     },
   };
 
+  const testVenueData = {
+    name: "Test Venue for Events",
+    location: {
+      address: "123 Test Street",
+      city: "Test City",
+      state: "Test State",
+      country: "Test Country",
+      zipCode: "12345",
+    },
+    capacity: 1000,
+    venueType: VenueType.CONCERT_HALL,
+    description: "A test venue for event testing",
+    contactInfo: {
+      email: "venue@testmail.com",
+      phone: "+1234567890",
+    },
+  };
+
   beforeAll(async () => {
     await initializeDatabase();
     app = await createApp();
   });
 
   afterAll(async () => {
-    await User.deleteMany({});
+    await User.deleteMany({ email: /@eventcontrollertest.com/ });
     await Event.deleteMany({});
     await Venue.deleteMany({});
     await closeDatabase();
@@ -74,21 +92,7 @@ describe("Event Controller", () => {
 
     // Create a test venue
     testVenue = await Venue.create({
-      name: "Test Venue for Events",
-      location: {
-        address: "123 Test Street",
-        city: "Test City",
-        state: "Test State",
-        country: "Test Country",
-        zipCode: "12345",
-      },
-      capacity: 1000,
-      venueType: VenueType.CONCERT_HALL,
-      description: "A test venue for event testing",
-      contactInfo: {
-        email: "venue@testmail.com",
-        phone: "+1234567890",
-      },
+      ...testVenueData,
       owner: organizerUser._id,
     });
 
@@ -108,6 +112,25 @@ describe("Event Controller", () => {
 
   describe("POST /events", () => {
     it("should create an event when authenticated as organizer", async () => {
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+
+        testVenue = await Venue.create({
+          ...testVenueData,
+          owner: organizerUser._id,
+        });
+        // testEvent = await Event.create({
+        //   ...testEventData,
+        //   venue: testVenue._id,
+        //   organizer: organizerUser._id,
+        // });
+      } catch (error) {}
+
       const eventData = {
         ...testEventData,
         name: "New Test Event",
@@ -151,6 +174,11 @@ describe("Event Controller", () => {
         venue: testVenue._id,
       };
 
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
+
       const response = await request(app)
         .post("/v1/events")
         .set("Authorization", `Bearer ${userToken}`)
@@ -176,6 +204,15 @@ describe("Event Controller", () => {
         name: "Invalid Event",
         // Missing other required fields
       };
+
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      } catch (error) {}
 
       const response = await request(app)
         .post("/v1/events")
@@ -420,6 +457,23 @@ describe("Event Controller", () => {
     });
 
     it("should return events created by the authenticated organizer", async () => {
+      // Create a new organizer user and generate a token
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+
+        testEvent = await Event.create({
+          ...testEventData,
+          name: "Organizer's Event for My Events Test",
+          venue: testVenue._id,
+          organizer: organizerUser._id,
+        });
+      } catch (error) {}
+
       const response = await request(app)
         .get("/v1/events/my-events")
         .set("Authorization", `Bearer ${organizerToken}`)
@@ -444,6 +498,11 @@ describe("Event Controller", () => {
     });
 
     it("should return 403 when authenticated as regular user", async () => {
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
+
       const response = await request(app)
         .get("/v1/events/my-events")
         .set("Authorization", `Bearer ${userToken}`)
@@ -464,8 +523,25 @@ describe("Event Controller", () => {
         },
       };
 
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      } catch (error) {}
+
+      // Create test event owned by the organizer before updating it
+      const eventOwnedByOrganizer = await Event.create({
+        ...testEventData,
+        name: "Event for Update Test",
+        venue: testVenue._id,
+        organizer: organizerUser._id,
+      });
+
       const response = await request(app)
-        .put(`/v1/events/${testEvent._id}`)
+        .put(`/v1/events/${eventOwnedByOrganizer._id}`)
         .set("Authorization", `Bearer ${organizerToken}`)
         .send(updateData);
 

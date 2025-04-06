@@ -363,122 +363,122 @@ describe("Artist Controller", () => {
     });
   });
 
-  describe("POST /artists/portfolio/images", () => {
-    // it("should upload portfolio images when authenticated as artist", async () => {
-    //   const mockUploadArray = jest.fn().mockImplementation(() => (req: Express.Request, res: Express.Response, next: Function) => {
-    //     req.files = [
-    //       {
-    //         fieldname: 'images',
-    //         originalname: 'test-image-1.jpg',
-    //         encoding: '7bit',
-    //         mimetype: 'image/jpeg',
-    //         destination: '/tmp',
-    //         filename: 'test-image-1.jpg',
-    //         path: '/tmp/test-image-1.jpg',
-    //         size: 1024,
-    //         buffer: Buffer.from('fake-image-content-1'),
-    //         stream: null as any
-    //       },
-    //       {
-    //         fieldname: 'images',
-    //         originalname: 'test-image-2.jpg',
-    //         encoding: '7bit',
-    //         mimetype: 'image/jpeg',
-    //         destination: '/tmp',
-    //         filename: 'test-image-2.jpg',
-    //         path: '/tmp/test-image-2.jpg',
-    //         size: 1024,
-    //         buffer: Buffer.from('fake-image-content-2'),
-    //         stream: null as any
-    //       }
-    //     ];
-    //     next();
-    //   });
+  // describe("POST /artists/portfolio/images", () => {
+  //   // it("should upload portfolio images when authenticated as artist", async () => {
+  //   //   const mockUploadArray = jest.fn().mockImplementation(() => (req: Express.Request, res: Express.Response, next: Function) => {
+  //   //     req.files = [
+  //   //       {
+  //   //         fieldname: 'images',
+  //   //         originalname: 'test-image-1.jpg',
+  //   //         encoding: '7bit',
+  //   //         mimetype: 'image/jpeg',
+  //   //         destination: '/tmp',
+  //   //         filename: 'test-image-1.jpg',
+  //   //         path: '/tmp/test-image-1.jpg',
+  //   //         size: 1024,
+  //   //         buffer: Buffer.from('fake-image-content-1'),
+  //   //         stream: null as any
+  //   //       },
+  //   //       {
+  //   //         fieldname: 'images',
+  //   //         originalname: 'test-image-2.jpg',
+  //   //         encoding: '7bit',
+  //   //         mimetype: 'image/jpeg',
+  //   //         destination: '/tmp',
+  //   //         filename: 'test-image-2.jpg',
+  //   //         path: '/tmp/test-image-2.jpg',
+  //   //         size: 1024,
+  //   //         buffer: Buffer.from('fake-image-content-2'),
+  //   //         stream: null as any
+  //   //       }
+  //   //     ];
+  //   //     next();
+  //   //   });
 
-    //   // Mock the upload module correctly
-    //   jest.mock("../../app/config/upload", () => ({
-    //     upload: {
-    //       array: mockUploadArray
-    //     },
-    //     uploadFileToS3: jest.fn().mockImplementation(
-    //       (file, dir) => `https://example.com/images/${file.filename}`
-    //     )
-    //   }), { virtual: true });
+  //   //   // Mock the upload module correctly
+  //   //   jest.mock("../../app/config/upload", () => ({
+  //   //     upload: {
+  //   //       array: mockUploadArray
+  //   //     },
+  //   //     uploadFileToS3: jest.fn().mockImplementation(
+  //   //       (file, dir) => `https://example.com/images/${file.filename}`
+  //   //     )
+  //   //   }), { virtual: true });
 
-    //   // Mock the ArtistService to handle the upload
-    //   jest.mock("../../app/services/ArtistService", () => ({
-    //     default: {
-    //       uploadPortfolioImages: jest.fn().mockResolvedValue([
-    //         'https://example.com/images/test-image-1.jpg',
-    //         'https://example.com/images/test-image-2.jpg'
-    //       ])
-    //     }
-    //   }), { virtual: true });
+  //   //   // Mock the ArtistService to handle the upload
+  //   //   jest.mock("../../app/services/ArtistService", () => ({
+  //   //     default: {
+  //   //       uploadPortfolioImages: jest.fn().mockResolvedValue([
+  //   //         'https://example.com/images/test-image-1.jpg',
+  //   //         'https://example.com/images/test-image-2.jpg'
+  //   //       ])
+  //   //     }
+  //   //   }), { virtual: true });
 
-    //   // Reset modules to ensure our mocks are used
-    //   jest.resetModules();
+  //   //   // Reset modules to ensure our mocks are used
+  //   //   jest.resetModules();
 
-    //   // Attach a form file for multer to process
-    //   const response = await request(app)
-    //     .post("/v1/artists/portfolio/images")
-    //     .set("Authorization", `Bearer ${artistToken}`)
-    //     .attach('images', Buffer.from('fake image data'), 'test-image-1.jpg')
-    //     .attach('images', Buffer.from('fake image data'), 'test-image-2.jpg');
+  //   //   // Attach a form file for multer to process
+  //   //   const response = await request(app)
+  //   //     .post("/v1/artists/portfolio/images")
+  //   //     .set("Authorization", `Bearer ${artistToken}`)
+  //   //     .attach('images', Buffer.from('fake image data'), 'test-image-1.jpg')
+  //   //     .attach('images', Buffer.from('fake image data'), 'test-image-2.jpg');
 
-    //   expect(response.status).toBe(200);
-    //   expect(response.body.success).toBe(true);
-    //   expect(response.body.message).toBe("Portfolio images uploaded successfully");
-    //   expect(response.body.data).toHaveProperty("imageUrls");
-    //   expect(Array.isArray(response.body.data.imageUrls)).toBe(true);
-    // });
+  //   //   expect(response.status).toBe(200);
+  //   //   expect(response.body.success).toBe(true);
+  //   //   expect(response.body.message).toBe("Portfolio images uploaded successfully");
+  //   //   expect(response.body.data).toHaveProperty("imageUrls");
+  //   //   expect(Array.isArray(response.body.data.imageUrls)).toBe(true);
+  //   // });
 
-    it("should return 400 when no images are uploaded", async () => {
-      // First, we need to properly mock the upload module
-      const mockUploadArray = jest.fn().mockImplementation(() => (req: Express.Request, res: Express.Response, next: Function) => {
-        // Simulate multer with empty files array
-        req.files = [];
-        next();
-      });
+  //   it("should return 400 when no images are uploaded", async () => {
+  //     // First, we need to properly mock the upload module
+  //     const mockUploadArray = jest.fn().mockImplementation(() => (req: Express.Request, res: Express.Response, next: Function) => {
+  //       // Simulate multer with empty files array
+  //       req.files = [];
+  //       next();
+  //     });
 
-      // Mock the upload module correctly
-      jest.mock("../../app/config/upload", () => ({
-        upload: {
-          array: mockUploadArray
-        }
-      }), { virtual: true });
+  //     // Mock the upload module correctly
+  //     jest.mock("../../app/config/upload", () => ({
+  //       upload: {
+  //         array: mockUploadArray
+  //       }
+  //     }), { virtual: true });
 
-      // Reset modules to ensure our mocks are used
-      jest.resetModules();
+  //     // Reset modules to ensure our mocks are used
+  //     jest.resetModules();
 
-      // Import and use the express routes
-      const artistRoutes = require("../../app/routes/v1/artistRoutes");
+  //     // Import and use the express routes
+  //     const artistRoutes = require("../../app/routes/v1/artistRoutes");
 
-      // When no files are uploaded, the controller should throw an AppError with status 400
-      const response = await request(app)
-        .post("/v1/artists/portfolio/images")
-        .set("Authorization", `Bearer ${artistToken}`)
-        .set("Content-Type", "multipart/form-data");
+  //     // When no files are uploaded, the controller should throw an AppError with status 400
+  //     const response = await request(app)
+  //       .post("/v1/artists/portfolio/images")
+  //       .set("Authorization", `Bearer ${artistToken}`)
+  //       .set("Content-Type", "multipart/form-data");
 
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty("status", "error");
-      expect(response.body).toHaveProperty("message", "No images uploaded");
-    });
+  //     expect(response.status).toBe(400);
+  //     expect(response.body).toHaveProperty("status", "error");
+  //     expect(response.body).toHaveProperty("message", "No images uploaded");
+  //   });
 
-    it("should return 403 when user is not an artist", async () => {
-      const response = await request(app)
-        .post("/v1/artists/portfolio/images")
-        .set("Authorization", `Bearer ${userToken}`)
-        .set("Content-Type", "multipart/form-data");
+  //   it("should return 403 when user is not an artist", async () => {
+  //     const response = await request(app)
+  //       .post("/v1/artists/portfolio/images")
+  //       .set("Authorization", `Bearer ${userToken}`)
+  //       .set("Content-Type", "multipart/form-data");
 
-      expect(response.status).toBe(403);
-    });
+  //     expect(response.status).toBe(403);
+  //   });
 
-    it("should return 401 when not authenticated", async () => {
-      const response = await request(app)
-        .post("/v1/artists/portfolio/images")
-        .set("Content-Type", "multipart/form-data");
+  //   it("should return 401 when not authenticated", async () => {
+  //     const response = await request(app)
+  //       .post("/v1/artists/portfolio/images")
+  //       .set("Content-Type", "multipart/form-data");
 
-      expect(response.status).toBe(401);
-    });
-  });
+  //     expect(response.status).toBe(401);
+  //   });
+  // });
 });

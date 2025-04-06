@@ -106,8 +106,10 @@ class VenueService {
       throw new AppError('User not found', 404);
     }
 
+    // console.log(venue.owner, "OWNWE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
     const isAdmin = user.role === UserRole.ADMIN;
-    const isOwner = venue.owner._id.toString() === userId.toString();
+    const isOwner = venue.owner?._id?.toString() === userId.toString();
 
     if (!isOwner && !isAdmin) {
       throw new AppError('You are not authorized to delete this venue', 403);

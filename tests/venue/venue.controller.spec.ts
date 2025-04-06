@@ -93,11 +93,6 @@ describe("Venue Controller", () => {
 
   describe("POST /venues", () => {
     it("should create a venue when authenticated as organizer", async () => {
-      const venueData = {
-        ...testVenueData,
-        name: "New Test Venue",
-      };
-
       try {
         organizerUser = await createTestUser({
           ...testUserData,
@@ -106,6 +101,12 @@ describe("Venue Controller", () => {
         });
         organizerToken = createToken(organizerUser);
       } catch (error) {}
+
+      const venueData = {
+        ...testVenueData,
+        name: "New Test Venue",
+        owner: organizerUser._id,
+      };
 
       const response = await request(app)
         .post("/v1/venues")
@@ -174,6 +175,15 @@ describe("Venue Controller", () => {
         // Missing other required fields
       };
 
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      } catch (error) {}
+
       const response = await request(app)
         .post("/v1/venues")
         .set("Authorization", `Bearer ${organizerToken}`)
@@ -219,6 +229,16 @@ describe("Venue Controller", () => {
 
   describe("GET /venues", () => {
     beforeEach(async () => {
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      }
+      catch (error) {}
+
       // Create additional venues for testing search/filters
       const venues = [
         {
@@ -397,6 +417,16 @@ describe("Venue Controller", () => {
 
   describe("GET /venues/my-venues", () => {
     beforeEach(async () => {
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+      }
+      catch (error) {}
+
       // Create additional venues for the organizer
       await Venue.create([
         {
@@ -439,6 +469,21 @@ describe("Venue Controller", () => {
     });
 
     it("should return venues owned by the authenticated user", async () => {
+      try {
+        organizerUser = await createTestUser({
+          ...testUserData,
+          email: `organizer${Date.now()}@eventcontrollertest.com`,
+          role: UserRole.ORGANIZER,
+        });
+        organizerToken = createToken(organizerUser);
+
+        // Create a venue specifically for this test
+        testVenue = await Venue.create({
+          ...testVenueData,
+          owner: organizerUser._id,
+        });
+      } catch (error) {}
+
       const response = await request(app)
         .get("/v1/venues/my-venues")
         .set("Authorization", `Bearer ${organizerToken}`)
@@ -463,6 +508,11 @@ describe("Venue Controller", () => {
     });
 
     it("should return empty array when user has no venues", async () => {
+      try {
+        testUser = await createTestUser(testUserData);
+        userToken = createToken(testUser);
+      } catch (error) {}
+
       const response = await request(app)
         .get("/v1/venues/my-venues")
         .set("Authorization", `Bearer ${userToken}`)
