@@ -1,17 +1,15 @@
 [Unit]
 Description=Music Booking API Daemon Service
-After=network.target
+After=network.target docker.service
+Requires=docker.service
 
 [Service]
-Type=simple
-ExecStart=/usr/bin/bash -c 'cd /home/mikerockmusic51/music-booking-api && docker-compose up'
+WorkingDirectory=/home/$USER/music-booking-api
+ExecStart=/usr/local/bin/docker-compose up
+ExecStop=/usr/local/bin/docker-compose down
 Restart=always
-RestartSec=5
-User=ubuntu
-WorkingDirectory=/home/mikerockmusic51:/sic-booking-api
-StandardOutput=append:/var/log/sic-booking-api.log
-StandardError=append:/var/log/sic-booking-api-error.log
-Environment=NODE_ENV=production
+User=$USER
+Group=$USER
 
 [Install]
 WantedBy=multi-user.target
