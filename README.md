@@ -149,6 +149,11 @@ CORS_ORIGIN=*
    npm start
    ```
 
+### URLs
+
+- [**Production API**](http://34.59.80.8/)
+- [**Postman Documentation**](https://documenter.getpostman.com/view/30168355/2sB2cUCPaQ)
+
 ### Testing with Postman
 
 1. Import the Postman collection from `/postman/Music_Booking_API.postman_collection.json`
