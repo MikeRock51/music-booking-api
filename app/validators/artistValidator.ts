@@ -1,4 +1,5 @@
 import { body } from "express-validator";
+import { MusicGenre } from "../models/Artist";
 
 export const artistProfileValidator = [
     body("artistName").notEmpty().withMessage("Artist name is required").trim(),
@@ -6,20 +7,7 @@ export const artistProfileValidator = [
       .isArray({ min: 1 })
       .withMessage("At least one genre must be provided"),
     body("genres.*")
-      .isIn([
-        "pop",
-        "rock",
-        "jazz",
-        "hip-hop",
-        "electronic",
-        "classical",
-        "folk",
-        "reggae",
-        "r&b",
-        "country",
-        "blues",
-        "other",
-      ])
+      .isIn(Object.values(MusicGenre))
       .withMessage("Invalid genre"),
     body("bio")
       .notEmpty()
