@@ -114,17 +114,17 @@ class ArtistService {
     }
 
     // Apply rate range filter
-    if (filters.minRate || filters.maxRate) {
-      if (filters.minRate) {
-        query["rate.amount"] = { $gte: filters.minRate };
-      }
-      if (filters.maxRate) {
-        query["rate.amount"] = {
-          ...query["rate.amount"],
-          $lte: filters.maxRate,
-        };
-      }
+    if (filters.minRate) {
+      query["rate.amount"] = { $gte: filters.minRate };
     }
+
+    if (filters.maxRate) {
+      query["rate.amount"] = {
+        ...query["rate.amount"],
+        $lte: filters.maxRate,
+      };
+    }
+
 
     // Apply rating filter
     if (filters.minRating) {
