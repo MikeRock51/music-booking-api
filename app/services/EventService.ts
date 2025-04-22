@@ -200,11 +200,7 @@ class EventService {
    * @param page - Page number for pagination
    * @param limit - Number of results per page
    */
-  async findEvents(
-    filters: any,
-    page = 1,
-    limit = 10
-  ): Promise<IEvent[]> {
+  async findEvents(filters: any, page = 1, limit = 10): Promise<IEvent[]> {
     const query: any = {
       status: EventStatus.PUBLISHED,
       isPrivate: false,
@@ -249,17 +245,15 @@ class EventService {
     }
 
     // Price range filter
-    if (filters.minPrice || filters.maxPrice) {
-      if (filters.minPrice) {
-        query["ticketInfo.price"] = { $gte: Number(filters.minPrice) };
-      }
+    if (filters.minPrice) {
+      query["ticketInfo.price"] = { $gte: Number(filters.minPrice) };
+    }
 
-      if (filters.maxPrice) {
-        query["ticketInfo.price"] = {
-          ...query["ticketInfo.price"],
-          $lte: Number(filters.maxPrice),
-        };
-      }
+    if (filters.maxPrice) {
+      query["ticketInfo.price"] = {
+        ...query["ticketInfo.price"],
+        $lte: Number(filters.maxPrice),
+      };
     }
 
     // Featured artist filter
